@@ -1,0 +1,757 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+APICBASE_ENABLE_X2APIC	specialreg.h	285;"	d
+AS	Makefile	/^AS:=x86_64-elf-gas$/;"	m
+AS32	Makefile	/^AS32:=i686-elf-as$/;"	m
+Arena	dat.h	/^struct Arena {$/;"	s
+Arena	dat.h	/^typedef struct Arena Arena;$/;"	t	typeref:struct:Arena
+BU_CFG_THRL2IDXCMPDIS	specialreg.h	444;"	d
+BU_CFG_WBENHWSBDIS	specialreg.h	446;"	d
+BU_CFG_WBPFSMCCHKDIS	specialreg.h	445;"	d
+C3_CPUID_DO_ACE	specialreg.h	778;"	d
+C3_CPUID_DO_ACE2	specialreg.h	780;"	d
+C3_CPUID_DO_PHE	specialreg.h	782;"	d
+C3_CPUID_DO_PMM	specialreg.h	784;"	d
+C3_CPUID_DO_RNG	specialreg.h	776;"	d
+C3_CPUID_HAS_ACE	specialreg.h	777;"	d
+C3_CPUID_HAS_ACE2	specialreg.h	779;"	d
+C3_CPUID_HAS_PHE	specialreg.h	781;"	d
+C3_CPUID_HAS_PMM	specialreg.h	783;"	d
+C3_CPUID_HAS_RNG	specialreg.h	775;"	d
+C3_CRYPT_CWLO_ALG_AES	specialreg.h	789;"	d
+C3_CRYPT_CWLO_ALG_M	specialreg.h	788;"	d
+C3_CRYPT_CWLO_DECRYPT	specialreg.h	796;"	d
+C3_CRYPT_CWLO_ENCRYPT	specialreg.h	795;"	d
+C3_CRYPT_CWLO_INTERMEDIATE	specialreg.h	794;"	d
+C3_CRYPT_CWLO_KEY128	specialreg.h	797;"	d
+C3_CRYPT_CWLO_KEY192	specialreg.h	798;"	d
+C3_CRYPT_CWLO_KEY256	specialreg.h	799;"	d
+C3_CRYPT_CWLO_KEYGEN_HW	specialreg.h	791;"	d
+C3_CRYPT_CWLO_KEYGEN_M	specialreg.h	790;"	d
+C3_CRYPT_CWLO_KEYGEN_SW	specialreg.h	792;"	d
+C3_CRYPT_CWLO_NORMAL	specialreg.h	793;"	d
+C3_CRYPT_CWLO_ROUND_M	specialreg.h	787;"	d
+C3_HAS_AES	specialreg.h	769;"	d
+C3_HAS_AESCTR	specialreg.h	772;"	d
+C3_HAS_MM	specialreg.h	771;"	d
+C3_HAS_SHA	specialreg.h	770;"	d
+CC	Makefile	/^CC:=x86_64-elf-gcc$/;"	m
+CC32	Makefile	/^CC32:=i686-elf-gcc$/;"	m
+CCR0	specialreg.h	58;"	d
+CCR0_A20M	specialreg.h	61;"	d
+CCR0_BARB	specialreg.h	64;"	d
+CCR0_CO	specialreg.h	65;"	d
+CCR0_FLUSH	specialreg.h	63;"	d
+CCR0_KEN	specialreg.h	62;"	d
+CCR0_NC0	specialreg.h	59;"	d
+CCR0_NC1	specialreg.h	60;"	d
+CCR0_SUSPEND	specialreg.h	66;"	d
+CCR1	specialreg.h	68;"	d
+CCR1_RPL	specialreg.h	69;"	d
+CFLAGS	Makefile	/^CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra$/;"	m
+CFLAGS32	Makefile	/^CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra$/;"	m
+CPUID	specialreg.h	265;"	d
+CPUID2FAMILY	specialreg.h	261;"	d
+CPUID2MODEL	specialreg.h	262;"	d
+CPUID2STEPPING	specialreg.h	263;"	d
+CPUIDEAX_BIT_GC	specialreg.h	202;"	d
+CPUIDEAX_LEN_EBX	specialreg.h	203;"	d
+CPUIDEAX_NUM_GC	specialreg.h	201;"	d
+CPUIDEAX_VERID	specialreg.h	200;"	d
+CPUIDEBX_EVT_BRANCH_INST	specialreg.h	210;"	d
+CPUIDEBX_EVT_BRANCH_MISP	specialreg.h	211;"	d
+CPUIDEBX_EVT_CACHE_MIS	specialreg.h	209;"	d
+CPUIDEBX_EVT_CACHE_REF	specialreg.h	208;"	d
+CPUIDEBX_EVT_CORE	specialreg.h	205;"	d
+CPUIDEBX_EVT_INST	specialreg.h	206;"	d
+CPUIDEBX_EVT_REFR	specialreg.h	207;"	d
+CPUIDECX_3DNOWP	specialreg.h	238;"	d
+CPUIDECX_ABM	specialreg.h	235;"	d
+CPUIDECX_AES	specialreg.h	163;"	d
+CPUIDECX_AMCR8	specialreg.h	234;"	d
+CPUIDECX_AVX	specialreg.h	166;"	d
+CPUIDECX_CMPLEG	specialreg.h	231;"	d
+CPUIDECX_CNXTID	specialreg.h	150;"	d
+CPUIDECX_CX16	specialreg.h	152;"	d
+CPUIDECX_DCA	specialreg.h	156;"	d
+CPUIDECX_DEADLINE	specialreg.h	162;"	d
+CPUIDECX_DSCPL	specialreg.h	144;"	d
+CPUIDECX_DTES64	specialreg.h	142;"	d
+CPUIDECX_EAPICSP	specialreg.h	233;"	d
+CPUIDECX_EST	specialreg.h	147;"	d
+CPUIDECX_F16C	specialreg.h	167;"	d
+CPUIDECX_FMA3	specialreg.h	151;"	d
+CPUIDECX_FMA4	specialreg.h	246;"	d
+CPUIDECX_HV	specialreg.h	169;"	d
+CPUIDECX_IBS	specialreg.h	240;"	d
+CPUIDECX_LAHF	specialreg.h	230;"	d
+CPUIDECX_LWP	specialreg.h	245;"	d
+CPUIDECX_MASSE	specialreg.h	237;"	d
+CPUIDECX_MOVBE	specialreg.h	160;"	d
+CPUIDECX_MWAIT	specialreg.h	143;"	d
+CPUIDECX_NODEID	specialreg.h	249;"	d
+CPUIDECX_OSVW	specialreg.h	239;"	d
+CPUIDECX_OSXSAVE	specialreg.h	165;"	d
+CPUIDECX_PCID	specialreg.h	155;"	d
+CPUIDECX_PCLMUL	specialreg.h	141;"	d
+CPUIDECX_PDCM	specialreg.h	154;"	d
+CPUIDECX_POPCNT	specialreg.h	161;"	d
+CPUIDECX_RDRAND	specialreg.h	168;"	d
+CPUIDECX_SKINIT	specialreg.h	242;"	d
+CPUIDECX_SMX	specialreg.h	146;"	d
+CPUIDECX_SSE3	specialreg.h	140;"	d
+CPUIDECX_SSE41	specialreg.h	157;"	d
+CPUIDECX_SSE42	specialreg.h	158;"	d
+CPUIDECX_SSE4A	specialreg.h	236;"	d
+CPUIDECX_SSSE3	specialreg.h	149;"	d
+CPUIDECX_SVM	specialreg.h	232;"	d
+CPUIDECX_TBM	specialreg.h	251;"	d
+CPUIDECX_TM2	specialreg.h	148;"	d
+CPUIDECX_TOPEXT	specialreg.h	252;"	d
+CPUIDECX_VMX	specialreg.h	145;"	d
+CPUIDECX_WDT	specialreg.h	243;"	d
+CPUIDECX_X2APIC	specialreg.h	159;"	d
+CPUIDECX_XOP	specialreg.h	241;"	d
+CPUIDECX_XSAVE	specialreg.h	164;"	d
+CPUIDECX_XTPR	specialreg.h	153;"	d
+CPUIDEDX_BIT_FC	specialreg.h	214;"	d
+CPUIDEDX_ITSC	specialreg.h	259;"	d
+CPUIDEDX_NUM_FC	specialreg.h	213;"	d
+CPUID_3DNOW	specialreg.h	228;"	d
+CPUID_3DNOW2	specialreg.h	227;"	d
+CPUID_ACPI	specialreg.h	129;"	d
+CPUID_APIC	specialreg.h	116;"	d
+CPUID_B20	specialreg.h	127;"	d
+CPUID_B30	specialreg.h	137;"	d
+CPUID_CFLUSH	specialreg.h	126;"	d
+CPUID_CMOV	specialreg.h	122;"	d
+CPUID_CX8	specialreg.h	115;"	d
+CPUID_DE	specialreg.h	109;"	d
+CPUID_DS	specialreg.h	128;"	d
+CPUID_FFXSR	specialreg.h	224;"	d
+CPUID_FPU	specialreg.h	107;"	d
+CPUID_FXSR	specialreg.h	131;"	d
+CPUID_HTT	specialreg.h	135;"	d
+CPUID_LEAF	specialreg.h	269;"	d
+CPUID_LONG	specialreg.h	226;"	d
+CPUID_MCA	specialreg.h	121;"	d
+CPUID_MCE	specialreg.h	114;"	d
+CPUID_MMX	specialreg.h	130;"	d
+CPUID_MMXX	specialreg.h	223;"	d
+CPUID_MPC	specialreg.h	221;"	d
+CPUID_MSR	specialreg.h	112;"	d
+CPUID_MTRR	specialreg.h	119;"	d
+CPUID_NXE	specialreg.h	222;"	d
+CPUID_PAE	specialreg.h	113;"	d
+CPUID_PAGE1GB	specialreg.h	225;"	d
+CPUID_PAT	specialreg.h	123;"	d
+CPUID_PBE	specialreg.h	138;"	d
+CPUID_PGE	specialreg.h	120;"	d
+CPUID_PSE	specialreg.h	110;"	d
+CPUID_PSE36	specialreg.h	124;"	d
+CPUID_PSN	specialreg.h	125;"	d
+CPUID_SEP	specialreg.h	118;"	d
+CPUID_SS	specialreg.h	134;"	d
+CPUID_SSE	specialreg.h	132;"	d
+CPUID_SSE2	specialreg.h	133;"	d
+CPUID_SYS1	specialreg.h	117;"	d
+CPUID_TM	specialreg.h	136;"	d
+CPUID_TSC	specialreg.h	111;"	d
+CPUID_VME	specialreg.h	108;"	d
+CR0_AM	specialreg.h	51;"	d
+CR0_CD	specialreg.h	53;"	d
+CR0_EM	specialreg.h	41;"	d
+CR0_ET	specialreg.h	43;"	d
+CR0_MP	specialreg.h	40;"	d
+CR0_NE	specialreg.h	49;"	d
+CR0_NW	specialreg.h	52;"	d
+CR0_PE	specialreg.h	39;"	d
+CR0_PG	specialreg.h	44;"	d
+CR0_TS	specialreg.h	42;"	d
+CR0_WP	specialreg.h	50;"	d
+CR4_DE	specialreg.h	79;"	d
+CR4_FSGSBASE	specialreg.h	89;"	d
+CR4_MCE	specialreg.h	82;"	d
+CR4_OSFXSR	specialreg.h	85;"	d
+CR4_OSXMMEXCPT	specialreg.h	86;"	d
+CR4_OSXSAVE	specialreg.h	91;"	d
+CR4_PAE	specialreg.h	81;"	d
+CR4_PCE	specialreg.h	84;"	d
+CR4_PCIDE	specialreg.h	90;"	d
+CR4_PGE	specialreg.h	83;"	d
+CR4_PSE	specialreg.h	80;"	d
+CR4_PVI	specialreg.h	77;"	d
+CR4_SMAP	specialreg.h	93;"	d
+CR4_SMEP	specialreg.h	92;"	d
+CR4_SMXE	specialreg.h	88;"	d
+CR4_TSD	specialreg.h	78;"	d
+CR4_VME	specialreg.h	76;"	d
+CR4_VMXE	specialreg.h	87;"	d
+Console	dat.h	/^typedef ConsoleDesc *Console;$/;"	t
+ConsoleDesc	dat.h	/^typedef struct ConsoleDesc {$/;"	s
+ConsoleDesc	dat.h	/^} ConsoleDesc;$/;"	t	typeref:struct:ConsoleDesc
+DC_CFG_DIS_CNV_WC_SSO	specialreg.h	440;"	d
+DC_CFG_DIS_SMC_CHK_BUF	specialreg.h	441;"	d
+DE_CFG_721	specialreg.h	418;"	d
+EFER_LMA	specialreg.h	404;"	d
+EFER_LME	specialreg.h	403;"	d
+EFER_NXE	specialreg.h	405;"	d
+EFER_SCE	specialreg.h	402;"	d
+EI_NIDENT	load.c	33;"	d	file:
+Elf64_Addr	load.c	/^typedef u64 Elf64_Addr;$/;"	t	file:
+Elf64_Ehdr	load.c	/^} Elf64_Ehdr;$/;"	t	typeref:struct:__anon2	file:
+Elf64_Off	load.c	/^typedef u64 Elf64_Off;$/;"	t	file:
+FIS_TYPE_BIST	ahci.h	/^    FIS_TYPE_BIST		= 0x58,	\/\/ BIST activate FIS - bidirectional$/;"	e	enum:__anon1
+FIS_TYPE_DATA	ahci.h	/^    FIS_TYPE_DATA		= 0x46,	\/\/ Data FIS - bidirectional$/;"	e	enum:__anon1
+FIS_TYPE_DEV_BITS	ahci.h	/^    FIS_TYPE_DEV_BITS	= 0xA1,	\/\/ Set device bits FIS - device to host$/;"	e	enum:__anon1
+FIS_TYPE_DMA_ACT	ahci.h	/^    FIS_TYPE_DMA_ACT	= 0x39,	\/\/ DMA activate FIS - device to host$/;"	e	enum:__anon1
+FIS_TYPE_DMA_SETUP	ahci.h	/^    FIS_TYPE_DMA_SETUP	= 0x41,	\/\/ DMA setup FIS - bidirectional$/;"	e	enum:__anon1
+FIS_TYPE_PIO_SETUP	ahci.h	/^    FIS_TYPE_PIO_SETUP	= 0x5F,	\/\/ PIO setup FIS - device to host$/;"	e	enum:__anon1
+FIS_TYPE_REG_D2H	ahci.h	/^    FIS_TYPE_REG_D2H	= 0x34,	\/\/ Register FIS - device to host$/;"	e	enum:__anon1
+FIS_TYPE_REG_H2D	ahci.h	/^    FIS_TYPE_REG_H2D	= 0x27,	\/\/ Register FIS - host to device$/;"	e	enum:__anon1
+FisData	ahci.h	/^typedef struct FisData$/;"	s
+FisData	ahci.h	/^} FisData;$/;"	t	typeref:struct:FisData
+FisRegDeviceToHost	ahci.h	/^typedef struct FisRegDeviceToHost$/;"	s
+FisRegDeviceToHost	ahci.h	/^} FisRegDeviceToHost;$/;"	t	typeref:struct:FisRegDeviceToHost
+FisRegHostToDevice	ahci.h	/^typedef struct FisRegHostToDevice$/;"	s
+FisRegHostToDevice	ahci.h	/^} FisRegHostToDevice;$/;"	t	typeref:struct:FisRegHostToDevice
+FisType	ahci.h	/^} FisType;$/;"	t	typeref:enum:__anon1
+GDTEntry	load.c	/^typedef struct GDTEntry {$/;"	s	file:
+GDTEntry	load.c	/^} GDTEntry;$/;"	t	typeref:struct:GDTEntry	file:
+HWCR_FFDIS	specialreg.h	427;"	d
+IC_CFG_DIS_SEQ_PREFETCH	specialreg.h	437;"	d
+INIT32_CS	load.c	23;"	d	file:
+IPM_C1E_CMP_HLT	specialreg.h	420;"	d
+IPM_SMI_CMP_HLT	specialreg.h	421;"	d
+K7_ALL_QUIET_STALL	specialreg.h	760;"	d
+K7_BP0_MATCH	specialreg.h	763;"	d
+K7_BP1_MATCH	specialreg.h	764;"	d
+K7_BP2_MATCH	specialreg.h	765;"	d
+K7_BP3_MATCH	specialreg.h	766;"	d
+K7_BRANCH_ABORTS_TO_RETIRE	specialreg.h	753;"	d
+K7_CACHE_LINE_INVAL	specialreg.h	715;"	d
+K7_CYCLES_INT_MASKED	specialreg.h	747;"	d
+K7_CYCLES_INT_PENDING_AND_MASKED	specialreg.h	748;"	d
+K7_CYCLES_PROCESSOR_IS_RUNNING	specialreg.h	716;"	d
+K7_DATA_CACHE_ACCESS	specialreg.h	702;"	d
+K7_DATA_CACHE_MISS	specialreg.h	703;"	d
+K7_DATA_CACHE_REFILL	specialreg.h	704;"	d
+K7_DATA_CACHE_REFILL_SYSTEM	specialreg.h	705;"	d
+K7_DATA_CACHE_WBACK	specialreg.h	706;"	d
+K7_DISPATCH_STALLS	specialreg.h	752;"	d
+K7_EVTSEL_COUNTER_MASK	specialreg.h	693;"	d
+K7_EVTSEL_COUNTER_MASK_SHIFT	specialreg.h	694;"	d
+K7_EVTSEL_E	specialreg.h	688;"	d
+K7_EVTSEL_EN	specialreg.h	691;"	d
+K7_EVTSEL_EVENT	specialreg.h	683;"	d
+K7_EVTSEL_INT	specialreg.h	690;"	d
+K7_EVTSEL_INV	specialreg.h	692;"	d
+K7_EVTSEL_OS	specialreg.h	687;"	d
+K7_EVTSEL_PC	specialreg.h	689;"	d
+K7_EVTSEL_UNIT	specialreg.h	684;"	d
+K7_EVTSEL_UNIT_SHIFT	specialreg.h	685;"	d
+K7_EVTSEL_USR	specialreg.h	686;"	d
+K7_FAR_TRANSFER_OR_RESYNC_BRANCH_PENDING	specialreg.h	761;"	d
+K7_FPU_FULL	specialreg.h	758;"	d
+K7_HW_INTR_RECV	specialreg.h	749;"	d
+K7_ICU_FULL	specialreg.h	756;"	d
+K7_IFU_IFETCH	specialreg.h	721;"	d
+K7_IFU_IFETCH_MISS	specialreg.h	722;"	d
+K7_IFU_REFILL_FROM_L2	specialreg.h	723;"	d
+K7_IFU_REFILL_FROM_SYSTEM	specialreg.h	724;"	d
+K7_IFU_STALL	specialreg.h	728;"	d
+K7_INSTRUCTION_DECODER_EMPTY	specialreg.h	751;"	d
+K7_ITLB_L1_MISS	specialreg.h	725;"	d
+K7_ITLB_L2_MISS	specialreg.h	726;"	d
+K7_L2_DTLB_HIT	specialreg.h	707;"	d
+K7_L2_DTLB_MISS	specialreg.h	708;"	d
+K7_L2_REQUEST	specialreg.h	717;"	d
+K7_L2_REQUEST_BUSY	specialreg.h	718;"	d
+K7_LS_FULL	specialreg.h	759;"	d
+K7_MISALIGNED_DATA_REF	specialreg.h	709;"	d
+K7_RESERVATION_STATIONS_FULL	specialreg.h	757;"	d
+K7_RETIRED_BRANCHES	specialreg.h	736;"	d
+K7_RETIRED_BRANCH_MISPREDICTED	specialreg.h	737;"	d
+K7_RETIRED_FAR_CONTROL_TRANSFER	specialreg.h	740;"	d
+K7_RETIRED_INDIRECT_MISPREDICTED	specialreg.h	744;"	d
+K7_RETIRED_INST	specialreg.h	734;"	d
+K7_RETIRED_NEAR_RETURNS	specialreg.h	742;"	d
+K7_RETIRED_NEAR_RETURNS_MISPREDICTED	specialreg.h	743;"	d
+K7_RETIRED_OPS	specialreg.h	735;"	d
+K7_RETIRED_RESYNC_BRANCH	specialreg.h	741;"	d
+K7_RETIRED_TAKEN_BRANCH	specialreg.h	738;"	d
+K7_RETIRED_TAKEN_BRANCH_MISPREDICTED	specialreg.h	739;"	d
+K7_RETURN_STACK_HITS	specialreg.h	730;"	d
+K7_RETURN_STACK_OVERFLOW	specialreg.h	731;"	d
+K7_SEGMENT_LOAD_STALL	specialreg.h	755;"	d
+K7_SEGMENT_REG_LOADS	specialreg.h	697;"	d
+K7_SERIALIZE	specialreg.h	754;"	d
+K7_SINGLE_BIT_ECC_ERROR	specialreg.h	714;"	d
+K7_SNOOP_HIT	specialreg.h	713;"	d
+K7_SNOOP_RESYNC	specialreg.h	727;"	d
+K7_STORES_TO_ACTIVE_INST_STREAM	specialreg.h	699;"	d
+K7_SYSTEM_REQUEST	specialreg.h	710;"	d
+K7_SYSTEM_REQUEST_TYPE	specialreg.h	711;"	d
+LS_CFG_DIS_LS2_SQUISH	specialreg.h	434;"	d
+MSR_APICBASE	specialreg.h	284;"	d
+MSR_BBL_CR_ADDR	specialreg.h	311;"	d
+MSR_BBL_CR_BUSY	specialreg.h	315;"	d
+MSR_BBL_CR_CTL	specialreg.h	313;"	d
+MSR_BBL_CR_CTR3	specialreg.h	316;"	d
+MSR_BBL_CR_D0	specialreg.h	290;"	d
+MSR_BBL_CR_D1	specialreg.h	291;"	d
+MSR_BBL_CR_D2	specialreg.h	292;"	d
+MSR_BBL_CR_DECC	specialreg.h	312;"	d
+MSR_BBL_CR_TRIG	specialreg.h	314;"	d
+MSR_BIOS_SIGN	specialreg.h	293;"	d
+MSR_BIOS_UPDT_TRIG	specialreg.h	289;"	d
+MSR_BU_CFG	specialreg.h	443;"	d
+MSR_CENT_TMTEMPERATURE	specialreg.h	381;"	d
+MSR_CESR	specialreg.h	281;"	d
+MSR_CR_PAT	specialreg.h	343;"	d
+MSR_CSTAR	specialreg.h	409;"	d
+MSR_CTR0	specialreg.h	282;"	d
+MSR_CTR1	specialreg.h	283;"	d
+MSR_DC_CFG	specialreg.h	439;"	d
+MSR_DEBUGCTLMSR	specialreg.h	333;"	d
+MSR_DE_CFG	specialreg.h	417;"	d
+MSR_EBC_FREQUENCY_ID	specialreg.h	287;"	d
+MSR_EBL_CR_POWERON	specialreg.h	286;"	d
+MSR_EFER	specialreg.h	401;"	d
+MSR_EVNTSEL0	specialreg.h	323;"	d
+MSR_EVNTSEL1	specialreg.h	324;"	d
+MSR_FSBASE	specialreg.h	412;"	d
+MSR_FSB_FREQ	specialreg.h	296;"	d
+MSR_GSBASE	specialreg.h	413;"	d
+MSR_HWCR	specialreg.h	426;"	d
+MSR_IC_CFG	specialreg.h	436;"	d
+MSR_INT_PEN_MSG	specialreg.h	415;"	d
+MSR_K6_UWCCR	specialreg.h	386;"	d
+MSR_K7_EVNTSEL0	specialreg.h	387;"	d
+MSR_K7_EVNTSEL1	specialreg.h	388;"	d
+MSR_K7_EVNTSEL2	specialreg.h	389;"	d
+MSR_K7_EVNTSEL3	specialreg.h	390;"	d
+MSR_K7_PERFCTR0	specialreg.h	391;"	d
+MSR_K7_PERFCTR1	specialreg.h	392;"	d
+MSR_K7_PERFCTR2	specialreg.h	393;"	d
+MSR_K7_PERFCTR3	specialreg.h	394;"	d
+MSR_KERNELGSBASE	specialreg.h	414;"	d
+MSR_LASTBRANCHFROMIP	specialreg.h	334;"	d
+MSR_LASTBRANCHTOIP	specialreg.h	335;"	d
+MSR_LASTINTFROMIP	specialreg.h	336;"	d
+MSR_LASTINTTOIP	specialreg.h	337;"	d
+MSR_LSTAR	specialreg.h	408;"	d
+MSR_LS_CFG	specialreg.h	433;"	d
+MSR_MC0_ADDR	specialreg.h	361;"	d
+MSR_MC0_CTL	specialreg.h	359;"	d
+MSR_MC0_MISC	specialreg.h	362;"	d
+MSR_MC0_STATUS	specialreg.h	360;"	d
+MSR_MC1_ADDR	specialreg.h	365;"	d
+MSR_MC1_CTL	specialreg.h	363;"	d
+MSR_MC1_MISC	specialreg.h	366;"	d
+MSR_MC1_STATUS	specialreg.h	364;"	d
+MSR_MC2_ADDR	specialreg.h	369;"	d
+MSR_MC2_CTL	specialreg.h	367;"	d
+MSR_MC2_MISC	specialreg.h	370;"	d
+MSR_MC2_STATUS	specialreg.h	368;"	d
+MSR_MC3_ADDR	specialreg.h	377;"	d
+MSR_MC3_CTL	specialreg.h	375;"	d
+MSR_MC3_MISC	specialreg.h	378;"	d
+MSR_MC3_STATUS	specialreg.h	376;"	d
+MSR_MC4_ADDR	specialreg.h	373;"	d
+MSR_MC4_CTL	specialreg.h	371;"	d
+MSR_MC4_MISC	specialreg.h	374;"	d
+MSR_MC4_STATUS	specialreg.h	372;"	d
+MSR_MCG_CAP	specialreg.h	320;"	d
+MSR_MCG_CTL	specialreg.h	322;"	d
+MSR_MCG_STATUS	specialreg.h	321;"	d
+MSR_MTRRcap	specialreg.h	310;"	d
+MSR_MTRRdefType	specialreg.h	344;"	d
+MSR_MTRRfix16K_80000	specialreg.h	341;"	d
+MSR_MTRRfix4K_C0000	specialreg.h	342;"	d
+MSR_MTRRfix64K_00000	specialreg.h	340;"	d
+MSR_MTRRvarBase	specialreg.h	339;"	d
+MSR_NB_CFG	specialreg.h	429;"	d
+MSR_P5_MC_ADDR	specialreg.h	278;"	d
+MSR_P5_MC_TYPE	specialreg.h	279;"	d
+MSR_PERFCTR0	specialreg.h	294;"	d
+MSR_PERFCTR1	specialreg.h	295;"	d
+MSR_PERF_CTL	specialreg.h	326;"	d
+MSR_PERF_FIXED_CTR1	specialreg.h	345;"	d
+MSR_PERF_FIXED_CTR2	specialreg.h	346;"	d
+MSR_PERF_FIXED_CTR_ANYTHR	specialreg.h	354;"	d
+MSR_PERF_FIXED_CTR_CTRL	specialreg.h	347;"	d
+MSR_PERF_FIXED_CTR_FC	specialreg.h	353;"	d
+MSR_PERF_FIXED_CTR_FC_1	specialreg.h	349;"	d
+MSR_PERF_FIXED_CTR_FC_123	specialreg.h	350;"	d
+MSR_PERF_FIXED_CTR_FC_ANY	specialreg.h	351;"	d
+MSR_PERF_FIXED_CTR_FC_DIS	specialreg.h	348;"	d
+MSR_PERF_FIXED_CTR_FC_MASK	specialreg.h	352;"	d
+MSR_PERF_FIXED_CTR_INT	specialreg.h	355;"	d
+MSR_PERF_GLOBAL_CTR1_EN	specialreg.h	357;"	d
+MSR_PERF_GLOBAL_CTR2_EN	specialreg.h	358;"	d
+MSR_PERF_GLOBAL_CTRL	specialreg.h	356;"	d
+MSR_PERF_STATUS	specialreg.h	325;"	d
+MSR_ROB_CR_BKUPTMPDR6	specialreg.h	338;"	d
+MSR_SFMASK	specialreg.h	410;"	d
+MSR_STAR	specialreg.h	407;"	d
+MSR_SYSCFG	specialreg.h	399;"	d
+MSR_SYSENTER_CS	specialreg.h	317;"	d
+MSR_SYSENTER_EIP	specialreg.h	319;"	d
+MSR_SYSENTER_ESP	specialreg.h	318;"	d
+MSR_TEMPERATURE_TARGET	specialreg.h	302;"	d
+MSR_TEMPERATURE_TARGET_LOW_BIT_UNDOCUMENTED	specialreg.h	309;"	d
+MSR_TEMPERATURE_TARGET_TJMAX	specialreg.h	303;"	d
+MSR_TEMPERATURE_TARGET_UNDOCUMENTED	specialreg.h	308;"	d
+MSR_TEST_CTL	specialreg.h	288;"	d
+MSR_THERM2_CTL	specialreg.h	332;"	d
+MSR_THERM_CONTROL	specialreg.h	327;"	d
+MSR_THERM_INTERRUPT	specialreg.h	328;"	d
+MSR_THERM_STATUS	specialreg.h	329;"	d
+MSR_THERM_STATUS_TEMP	specialreg.h	331;"	d
+MSR_THERM_STATUS_VALID_BIT	specialreg.h	330;"	d
+MSR_TSC	specialreg.h	280;"	d
+MTRR_N16K	specialreg.h	452;"	d
+MTRR_N4K	specialreg.h	453;"	d
+MTRR_N64K	specialreg.h	451;"	d
+NB_CFG_DISDATMSK	specialreg.h	431;"	d
+NB_CFG_DISIOREQLOCK	specialreg.h	430;"	d
+NCR1	specialreg.h	466;"	d
+NCR2	specialreg.h	467;"	d
+NCR3	specialreg.h	468;"	d
+NCR4	specialreg.h	469;"	d
+NCR_SIZE_0K	specialreg.h	471;"	d
+NCR_SIZE_128K	specialreg.h	477;"	d
+NCR_SIZE_16K	specialreg.h	474;"	d
+NCR_SIZE_16M	specialreg.h	484;"	d
+NCR_SIZE_1M	specialreg.h	480;"	d
+NCR_SIZE_256K	specialreg.h	478;"	d
+NCR_SIZE_2M	specialreg.h	481;"	d
+NCR_SIZE_32K	specialreg.h	475;"	d
+NCR_SIZE_32M	specialreg.h	485;"	d
+NCR_SIZE_4G	specialreg.h	486;"	d
+NCR_SIZE_4K	specialreg.h	472;"	d
+NCR_SIZE_4M	specialreg.h	482;"	d
+NCR_SIZE_512K	specialreg.h	479;"	d
+NCR_SIZE_64K	specialreg.h	476;"	d
+NCR_SIZE_8K	specialreg.h	473;"	d
+NCR_SIZE_8M	specialreg.h	483;"	d
+OBJS	Makefile	/^OBJS := main.o start64.o$/;"	m
+OBJS32	Makefile	/^OBJS32 := load.o start.o mem32.o kernel_image.o console.o$/;"	m
+OPTERON_MSR_PASSCODE	cpufunc.h	218;"	d
+PMC5_AGI_STALL	specialreg.h	542;"	d
+PMC5_BANK_CONFLICTS	specialreg.h	523;"	d
+PMC5_BP0_MATCH	specialreg.h	544;"	d
+PMC5_BP1_MATCH	specialreg.h	545;"	d
+PMC5_BP2_MATCH	specialreg.h	546;"	d
+PMC5_BP3_MATCH	specialreg.h	547;"	d
+PMC5_BRANCHES	specialreg.h	529;"	d
+PMC5_BRANCH_TAKEN	specialreg.h	531;"	d
+PMC5_BTB_HITS	specialreg.h	530;"	d
+PMC5_BUS_UTILIZATION	specialreg.h	535;"	d
+PMC5_CESR_E	specialreg.h	510;"	d
+PMC5_CESR_EVENT	specialreg.h	507;"	d
+PMC5_CESR_OS	specialreg.h	508;"	d
+PMC5_CESR_P	specialreg.h	511;"	d
+PMC5_CESR_USR	specialreg.h	509;"	d
+PMC5_DATA_CACHE_SNOOP	specialreg.h	520;"	d
+PMC5_DATA_CACHE_SNOOP_HIT	specialreg.h	521;"	d
+PMC5_DATA_LINES_WBACK	specialreg.h	519;"	d
+PMC5_DATA_READ	specialreg.h	513;"	d
+PMC5_DATA_READ_MISS	specialreg.h	516;"	d
+PMC5_DATA_READ_STALL	specialreg.h	537;"	d
+PMC5_DATA_RW	specialreg.h	549;"	d
+PMC5_DATA_RW_MISS	specialreg.h	550;"	d
+PMC5_DATA_TLB_MISS	specialreg.h	515;"	d
+PMC5_DATA_WRITE	specialreg.h	514;"	d
+PMC5_DATA_WRITE_MISS	specialreg.h	517;"	d
+PMC5_FLOPS	specialreg.h	543;"	d
+PMC5_HARDWARE_INTR	specialreg.h	548;"	d
+PMC5_INST_CACHE_MISS	specialreg.h	527;"	d
+PMC5_INST_EXECUTED	specialreg.h	533;"	d
+PMC5_INST_EXECUTED_V_PIPE	specialreg.h	534;"	d
+PMC5_INST_READ	specialreg.h	525;"	d
+PMC5_INST_TLB_MISS	specialreg.h	526;"	d
+PMC5_IO_CYCLE	specialreg.h	540;"	d
+PMC5_LOCKED_BUS	specialreg.h	539;"	d
+PMC5_MEM_ACCESS_BOTH_PIPES	specialreg.h	522;"	d
+PMC5_MISALIGNED_DATA	specialreg.h	524;"	d
+PMC5_NONCACHE_MEM_READ	specialreg.h	541;"	d
+PMC5_PIPELINE_FLUSH	specialreg.h	532;"	d
+PMC5_SEGMENT_REG_LOAD	specialreg.h	528;"	d
+PMC5_WRITE_BACKUP_STALL	specialreg.h	536;"	d
+PMC5_WRITE_E_M_STALL	specialreg.h	538;"	d
+PMC5_WRITE_M_E	specialreg.h	518;"	d
+PMC6_BACLEARS	specialreg.h	653;"	d
+PMC6_BR_BOGUS	specialreg.h	652;"	d
+PMC6_BR_INST_DECODED	specialreg.h	650;"	d
+PMC6_BR_INST_RETIRED	specialreg.h	646;"	d
+PMC6_BR_MISS_PRED_RETIRED	specialreg.h	647;"	d
+PMC6_BR_MISS_PRED_TAKEN_RET	specialreg.h	649;"	d
+PMC6_BR_TAKEN_RETIRED	specialreg.h	648;"	d
+PMC6_BTB_MISSES	specialreg.h	651;"	d
+PMC6_BUS_BNR_DRV	specialreg.h	613;"	d
+PMC6_BUS_DATA_RCV	specialreg.h	612;"	d
+PMC6_BUS_DRDY_CLOCKS	specialreg.h	597;"	d
+PMC6_BUS_HITM_DRDV	specialreg.h	615;"	d
+PMC6_BUS_HIT_DRV	specialreg.h	614;"	d
+PMC6_BUS_LOCK_CLOCKS	specialreg.h	598;"	d
+PMC6_BUS_REQ_OUTSTANDING	specialreg.h	599;"	d
+PMC6_BUS_SNOOP_STALL	specialreg.h	616;"	d
+PMC6_BUS_TRANS_IO	specialreg.h	607;"	d
+PMC6_BUS_TRANS_P	specialreg.h	606;"	d
+PMC6_BUS_TRANS_WB	specialreg.h	602;"	d
+PMC6_BUS_TRAN_ANY	specialreg.h	610;"	d
+PMC6_BUS_TRAN_BRD	specialreg.h	600;"	d
+PMC6_BUS_TRAN_BURST	specialreg.h	609;"	d
+PMC6_BUS_TRAN_DEF	specialreg.h	608;"	d
+PMC6_BUS_TRAN_IFETCH	specialreg.h	603;"	d
+PMC6_BUS_TRAN_INVAL	specialreg.h	604;"	d
+PMC6_BUS_TRAN_MEM	specialreg.h	611;"	d
+PMC6_BUS_TRAN_PWR	specialreg.h	605;"	d
+PMC6_BUS_TRAN_RFO	specialreg.h	601;"	d
+PMC6_CPU_CLK_UNHALTED	specialreg.h	663;"	d
+PMC6_CYCLES_DIV_BUSY	specialreg.h	624;"	d
+PMC6_CYCLES_INT_MASKED	specialreg.h	642;"	d
+PMC6_CYCLES_INT_PENDING_AND_MASKED	specialreg.h	643;"	d
+PMC6_DATA_MEM_REFS	specialreg.h	570;"	d
+PMC6_DCU_LINES_IN	specialreg.h	571;"	d
+PMC6_DCU_MISS_OUTSTANDING	specialreg.h	574;"	d
+PMC6_DCU_M_LINES_IN	specialreg.h	572;"	d
+PMC6_DCU_M_LINES_OUT	specialreg.h	573;"	d
+PMC6_DIV	specialreg.h	623;"	d
+PMC6_EMON_KNI_COMP_INST_RET	specialreg.h	638;"	d
+PMC6_EMON_KNI_INST_RETIRED	specialreg.h	637;"	d
+PMC6_EMON_KNI_PREF_DISPATCHED	specialreg.h	630;"	d
+PMC6_EMON_KNI_PREF_MISS	specialreg.h	631;"	d
+PMC6_EVTSEL_COUNTER_MASK	specialreg.h	566;"	d
+PMC6_EVTSEL_COUNTER_MASK_SHIFT	specialreg.h	567;"	d
+PMC6_EVTSEL_E	specialreg.h	561;"	d
+PMC6_EVTSEL_EN	specialreg.h	564;"	d
+PMC6_EVTSEL_EVENT	specialreg.h	556;"	d
+PMC6_EVTSEL_INT	specialreg.h	563;"	d
+PMC6_EVTSEL_INV	specialreg.h	565;"	d
+PMC6_EVTSEL_OS	specialreg.h	560;"	d
+PMC6_EVTSEL_PC	specialreg.h	562;"	d
+PMC6_EVTSEL_UNIT	specialreg.h	557;"	d
+PMC6_EVTSEL_UNIT_SHIFT	specialreg.h	558;"	d
+PMC6_EVTSEL_USR	specialreg.h	559;"	d
+PMC6_FLOPS	specialreg.h	619;"	d
+PMC6_FP_ASSIST	specialreg.h	621;"	d
+PMC6_FP_COMP_OPS_EXE	specialreg.h	620;"	d
+PMC6_FP_MMX_TRANS	specialreg.h	670;"	d
+PMC6_HW_INT_RX	specialreg.h	641;"	d
+PMC6_IFU_IFETCH	specialreg.h	577;"	d
+PMC6_IFU_IFETCH_MISS	specialreg.h	578;"	d
+PMC6_IFU_MEM_STALL	specialreg.h	580;"	d
+PMC6_ILD_STALL	specialreg.h	581;"	d
+PMC6_INST_DECODED	specialreg.h	636;"	d
+PMC6_INST_RETIRED	specialreg.h	634;"	d
+PMC6_ITLB_MISS	specialreg.h	579;"	d
+PMC6_L2_ADS	specialreg.h	592;"	d
+PMC6_L2_DBUS_BUSY	specialreg.h	593;"	d
+PMC6_L2_DBUS_BUSY_RD	specialreg.h	594;"	d
+PMC6_L2_IFETCH	specialreg.h	584;"	d
+PMC6_L2_LD	specialreg.h	585;"	d
+PMC6_L2_LINES_IN	specialreg.h	587;"	d
+PMC6_L2_LINES_OUT	specialreg.h	588;"	d
+PMC6_L2_M_LINES_INM	specialreg.h	589;"	d
+PMC6_L2_M_LINES_OUTM	specialreg.h	590;"	d
+PMC6_L2_RQSTS	specialreg.h	591;"	d
+PMC6_L2_ST	specialreg.h	586;"	d
+PMC6_LD_BLOCKS	specialreg.h	627;"	d
+PMC6_MISALIGN_MEM_REF	specialreg.h	629;"	d
+PMC6_MMX_ASSIST	specialreg.h	671;"	d
+PMC6_MMX_INSTR_EXEC	specialreg.h	666;"	d
+PMC6_MMX_INSTR_RET	specialreg.h	672;"	d
+PMC6_MMX_INSTR_TYPE_EXEC	specialreg.h	669;"	d
+PMC6_MMX_SAT_INSTR_EXEC	specialreg.h	667;"	d
+PMC6_MMX_UOPS_EXEC	specialreg.h	668;"	d
+PMC6_MUL	specialreg.h	622;"	d
+PMC6_PARTIAL_RAT_STALLS	specialreg.h	657;"	d
+PMC6_RESOURCE_STALLS	specialreg.h	656;"	d
+PMC6_RET_SEG_RENAMES	specialreg.h	677;"	d
+PMC6_SB_DRAINS	specialreg.h	628;"	d
+PMC6_SEGMENT_REG_LOADS	specialreg.h	660;"	d
+PMC6_SEG_REG_RENAMES	specialreg.h	676;"	d
+PMC6_SEG_RENAME_STALLS	specialreg.h	675;"	d
+PMC6_UOPS_RETIRED	specialreg.h	635;"	d
+QEMU	Makefile	/^QEMU:=qemu-system-x86_64$/;"	m
+Region	dat.h	/^struct Region {$/;"	s
+Region	dat.h	/^typedef struct Region Region;$/;"	t	typeref:struct:Region
+SEFF0EBX_ADX	specialreg.h	186;"	d
+SEFF0EBX_AVX2	specialreg.h	179;"	d
+SEFF0EBX_BMI1	specialreg.h	177;"	d
+SEFF0EBX_BMI2	specialreg.h	181;"	d
+SEFF0EBX_ERMS	specialreg.h	182;"	d
+SEFF0EBX_FSGSBASE	specialreg.h	176;"	d
+SEFF0EBX_HLE	specialreg.h	178;"	d
+SEFF0EBX_INVPCID	specialreg.h	183;"	d
+SEFF0EBX_RDSEED	specialreg.h	185;"	d
+SEFF0EBX_RTM	specialreg.h	184;"	d
+SEFF0EBX_SMAP	specialreg.h	187;"	d
+SEFF0EBX_SMEP	specialreg.h	180;"	d
+SegRegion	cpu.h	/^typedef struct SegRegionDesc* SegRegion;$/;"	t	typeref:struct:SegRegionDesc
+SegRegionDesc	cpu.h	/^struct SegRegionDesc {$/;"	s
+TPM_ARAT	specialreg.h	193;"	d
+TPM_SENSOR	specialreg.h	192;"	d
+X86_CR0_CD	load.c	18;"	d	file:
+X86_CR0_EM	load.c	13;"	d	file:
+X86_CR0_NW	load.c	17;"	d	file:
+X86_CR0_PE	load.c	12;"	d	file:
+X86_CR0_PG	load.c	19;"	d	file:
+X86_CR0_TS	load.c	14;"	d	file:
+X86_CR0_WP	load.c	15;"	d	file:
+X86_CR4_PAE	load.c	21;"	d	file:
+X86_CR4_PVI	load.c	20;"	d	file:
+X86_MSR_EFER	load.c	8;"	d	file:
+X86_MSR_EFER_LMA	load.c	10;"	d	file:
+XCR0_AVX	specialreg.h	100;"	d
+XCR0_SSE	specialreg.h	99;"	d
+XCR0_X87	specialreg.h	98;"	d
+__packed	cpu.h	/^} __packed;$/;"	v	typeref:struct:SegRegionDesc
+_start	start.s	/^_start:$/;"	l
+_start	start64.s	/^_start:$/;"	l
+bootmsg	load.c	/^static char* bootmsg = "Chalk.\\n";$/;"	v	file:
+breakpoint	cpufunc.h	/^breakpoint(void)$/;"	f
+bss_end_addr	load.c	/^  u32 bss_end_addr;$/;"	m	struct:mbheader	file:
+buf	dat.h	/^  unsigned short *buf;$/;"	m	struct:ConsoleDesc
+c	ahci.h	/^    u8	c:1;		\/\/ 1: Command, 0: Control$/;"	m	struct:FisRegHostToDevice
+cclear	console.c	/^void cclear(Console c, short color) {$/;"	f
+checksum	load.c	/^  u32 checksum;$/;"	m	struct:mbheader	file:
+clflush	cpufunc.h	/^clflush(u32 addr)$/;"	f
+color	dat.h	/^  unsigned short color;$/;"	m	struct:ConsoleDesc
+command	ahci.h	/^    u8	command;	\/\/ Command register$/;"	m	struct:FisRegHostToDevice
+control	ahci.h	/^    u8	control;	\/\/ Control register$/;"	m	struct:FisRegHostToDevice
+counth	ahci.h	/^    u8	counth;		\/\/ Count register, 15:8$/;"	m	struct:FisRegHostToDevice
+counth	ahci.h	/^    u8	counth;      \/\/ Count register, 15:8$/;"	m	struct:FisRegDeviceToHost
+countl	ahci.h	/^    u8	countl;		\/\/ Count register, 7:0$/;"	m	struct:FisRegHostToDevice
+countl	ahci.h	/^    u8	countl;      \/\/ Count register, 7:0$/;"	m	struct:FisRegDeviceToHost
+cprint	console.c	/^void cprint(Console c, char * str) {$/;"	f
+cprintint	console.c	/^void cprintint(Console c, int xx, int base, int sign)$/;"	f
+cputc	console.c	/^void cputc(Console cons, int c) {$/;"	f
+data	ahci.h	/^    u32	data[1];	\/\/ Payload$/;"	m	struct:FisData
+device	ahci.h	/^    u8	device;		\/\/ Device register$/;"	m	struct:FisRegHostToDevice
+device	ahci.h	/^    u8	device;      \/\/ Device register$/;"	m	struct:FisRegDeviceToHost
+digits	console.c	/^static char digits[] = "0123456789abcdef";$/;"	v	file:
+disable_intr	cpufunc.h	/^disable_intr(void)$/;"	f
+disable_paging	load.c	/^void disable_paging() {$/;"	f
+e_ehsize	load.c	/^  u16 e_ehsize;$/;"	m	struct:__anon2	file:
+e_entry	load.c	/^  Elf64_Addr e_entry;$/;"	m	struct:__anon2	file:
+e_flags	load.c	/^  u32 e_flags;$/;"	m	struct:__anon2	file:
+e_ident	load.c	/^  unsigned char e_ident[EI_NIDENT];$/;"	m	struct:__anon2	file:
+e_machine	load.c	/^  u16 e_machine;$/;"	m	struct:__anon2	file:
+e_phentsize	load.c	/^  u16 e_phentsize;$/;"	m	struct:__anon2	file:
+e_phnum	load.c	/^  u16 e_phnum;$/;"	m	struct:__anon2	file:
+e_phoff	load.c	/^  Elf64_Off e_phoff;$/;"	m	struct:__anon2	file:
+e_shentsize	load.c	/^  u16 e_shentsize;$/;"	m	struct:__anon2	file:
+e_shnum	load.c	/^  u16 e_shnum;$/;"	m	struct:__anon2	file:
+e_shoff	load.c	/^  Elf64_Off e_shoff;$/;"	m	struct:__anon2	file:
+e_shstrndx	load.c	/^  u16 e_shstrndx;$/;"	m	struct:__anon2	file:
+e_type	load.c	/^  u16 e_type;$/;"	m	struct:__anon2	file:
+e_version	load.c	/^  u32 e_version;$/;"	m	struct:__anon2	file:
+enable_intr	cpufunc.h	/^enable_intr(void)$/;"	f
+enable_long_mode	load.c	/^void enable_long_mode() {$/;"	f
+enable_pae_mode	load.c	/^void enable_pae_mode() {$/;"	f
+enable_paging	load.c	/^void enable_paging() {$/;"	f
+entry_addr	load.c	/^  u32 entry_addr;$/;"	m	struct:mbheader	file:
+error	ahci.h	/^    u8	error;       \/\/ Error register$/;"	m	struct:FisRegDeviceToHost
+featureh	ahci.h	/^    u8	featureh;	\/\/ Feature register, 15:8$/;"	m	struct:FisRegHostToDevice
+featurel	ahci.h	/^    u8	featurel;	\/\/ Feature register, 7:0$/;"	m	struct:FisRegHostToDevice
+first	load.c	/^  u32 first;$/;"	m	struct:GDTEntry	file:
+fis_type	ahci.h	/^    u8	fis_type;	\/\/ FIS_TYPE_DATA$/;"	m	struct:FisData
+fis_type	ahci.h	/^    u8	fis_type;	\/\/ FIS_TYPE_REG_H2D$/;"	m	struct:FisRegHostToDevice
+fis_type	ahci.h	/^    u8	fis_type;    \/\/ FIS_TYPE_REG_D2H$/;"	m	struct:FisRegDeviceToHost
+flags	load.c	/^  u32 flags;$/;"	m	struct:mbheader	file:
+get_active_pagetable	load.c	/^u32 get_active_pagetable(void) {$/;"	f
+header_addr	load.c	/^  u32 header_addr;$/;"	m	struct:mbheader	file:
+i	ahci.h	/^    u8	i:1;         \/\/ Interrupt bit$/;"	m	struct:FisRegDeviceToHost
+i16	u.h	/^typedef short i16;$/;"	t
+i32	u.h	/^typedef int i32;$/;"	t
+i64	u.h	/^typedef long i64;$/;"	t
+i8	u.h	/^typedef char i8;$/;"	t
+icc	ahci.h	/^    u8	icc;		\/\/ Isochronous command completion$/;"	m	struct:FisRegHostToDevice
+invlpg	cpufunc.h	/^invlpg(u32 addr)$/;"	f
+kernel_image_end	kernel_image.s	/^kernel_image_end:$/;"	l
+kernel_image_size	kernel_image.s	/^kernel_image_size:$/;"	l
+kernel_image_start	kernel_image.s	/^kernel_image_start:$/;"	l
+lba0	ahci.h	/^    u8	lba0;		\/\/ LBA low register, 7:0$/;"	m	struct:FisRegHostToDevice
+lba0	ahci.h	/^    u8	lba0;        \/\/ LBA low register, 7:0$/;"	m	struct:FisRegDeviceToHost
+lba1	ahci.h	/^    u8	lba1;		\/\/ LBA mid register, 15:8$/;"	m	struct:FisRegHostToDevice
+lba1	ahci.h	/^    u8	lba1;        \/\/ LBA mid register, 15:8$/;"	m	struct:FisRegDeviceToHost
+lba2	ahci.h	/^    u8	lba2;		\/\/ LBA high register, 23:16$/;"	m	struct:FisRegHostToDevice
+lba2	ahci.h	/^    u8	lba2;        \/\/ LBA high register, 23:16$/;"	m	struct:FisRegDeviceToHost
+lba3	ahci.h	/^    u8	lba3;		\/\/ LBA register, 31:24$/;"	m	struct:FisRegHostToDevice
+lba3	ahci.h	/^    u8	lba3;        \/\/ LBA register, 31:24$/;"	m	struct:FisRegDeviceToHost
+lba4	ahci.h	/^    u8	lba4;		\/\/ LBA register, 39:32$/;"	m	struct:FisRegHostToDevice
+lba4	ahci.h	/^    u8	lba4;        \/\/ LBA register, 39:32$/;"	m	struct:FisRegDeviceToHost
+lba5	ahci.h	/^    u8	lba5;		\/\/ LBA register, 47:40$/;"	m	struct:FisRegHostToDevice
+lba5	ahci.h	/^    u8	lba5;        \/\/ LBA register, 47:40$/;"	m	struct:FisRegDeviceToHost
+lcr0	cpufunc.h	/^lcr0(u32 val)$/;"	f
+lcr3	cpufunc.h	/^lcr3(u32 val)$/;"	f
+lcr4	cpufunc.h	/^lcr4(u32 val)$/;"	f
+lgdt	cpu.h	/^void	lgdt(SegRegion r) {$/;"	f
+lidt	cpufunc.h	/^lidt(void *p)$/;"	f
+lldt	cpufunc.h	/^lldt(u16 sel)$/;"	f
+load_addr	load.c	/^  u32 load_addr;$/;"	m	struct:mbheader	file:
+load_end_addr	load.c	/^  u32 load_end_addr;$/;"	m	struct:mbheader	file:
+long_mode_active	load.c	/^int long_mode_active() {$/;"	f
+ltr	cpufunc.h	/^ltr(u16 sel)$/;"	f
+lwb	dat.h	/^  long lwb;$/;"	m	struct:Arena
+lwb	dat.h	/^  long lwb;$/;"	m	struct:Region
+magic	load.c	/^  u32 magic;$/;"	m	struct:mbheader	file:
+main	load.c	/^int main() {$/;"	f
+main	main.c	/^int main() {$/;"	f
+mbheader	load.c	/^struct mbheader {$/;"	s	file:
+mfence	cpufunc.h	/^mfence(void)$/;"	f
+mmove	mem.c	/^void *mmove(void *dst, const void *src, unsigned int n) {$/;"	f
+mset	mem.c	/^void *mset(void *dst, int c, unsigned int n) {$/;"	f
+permissions	dat.h	/^  char permissions;$/;"	m	struct:Region
+pmport	ahci.h	/^    u8	pmport:4;	\/\/ Port multiplier$/;"	m	struct:FisData
+pmport	ahci.h	/^    u8	pmport:4;	\/\/ Port multiplier$/;"	m	struct:FisRegHostToDevice
+pmport	ahci.h	/^    u8	pmport:4;    \/\/ Port multiplier$/;"	m	struct:FisRegDeviceToHost
+pos	dat.h	/^  unsigned short pos;$/;"	m	struct:ConsoleDesc
+rcr0	cpufunc.h	/^rcr0(void)$/;"	f
+rcr2	cpufunc.h	/^rcr2(void)$/;"	f
+rcr3	cpufunc.h	/^rcr3(void)$/;"	f
+rcr4	cpufunc.h	/^rcr4(void)$/;"	f
+rd_base	cpu.h	/^        u64 rd_base;$/;"	m	struct:SegRegionDesc
+rd_limit	cpu.h	/^        u16 rd_limit;$/;"	m	struct:SegRegionDesc
+rdmsr	cpufunc.h	/^rdmsr(u32 msr)$/;"	f
+rdmsr_locked	cpufunc.h	/^rdmsr_locked(u32 msr, u32 code)$/;"	f
+read_eflags	cpufunc.h	/^read_eflags(void)$/;"	f
+rsv0	ahci.h	/^    u8	rsv0:2;      \/\/ Reserved$/;"	m	struct:FisRegDeviceToHost
+rsv0	ahci.h	/^    u8	rsv0:3;		\/\/ Reserved$/;"	m	struct:FisRegHostToDevice
+rsv0	ahci.h	/^    u8	rsv0:4;		\/\/ Reserved$/;"	m	struct:FisData
+rsv1	ahci.h	/^    u8	rsv1:1;      \/\/ Reserved$/;"	m	struct:FisRegDeviceToHost
+rsv1	ahci.h	/^    u8	rsv1[2];	\/\/ Reserved$/;"	m	struct:FisData
+rsv1	ahci.h	/^    u8	rsv1[4];	\/\/ Reserved$/;"	m	struct:FisRegHostToDevice
+rsv2	ahci.h	/^    u8	rsv2;        \/\/ Reserved$/;"	m	struct:FisRegDeviceToHost
+rsv3	ahci.h	/^    u8	rsv3[2];     \/\/ Reserved$/;"	m	struct:FisRegDeviceToHost
+rsv4	ahci.h	/^    u8	rsv4[4];     \/\/ Reserved$/;"	m	struct:FisRegDeviceToHost
+second	load.c	/^  u32 second;$/;"	m	struct:GDTEntry	file:
+set_active_pagetable	load.c	/^void set_active_pagetable(u32 root) {$/;"	f
+stack_bottom	start.s	/^stack_bottom:$/;"	l
+stack_top	start.s	/^stack_top:$/;"	l
+start	boot.s	/^start:$/;"	l
+status	ahci.h	/^    u8	status;      \/\/ Status register$/;"	m	struct:FisRegDeviceToHost
+stosb	mem.c	/^static inline void stosb(void *addr, int data, int cnt) {$/;"	f	file:
+stosl	mem.c	/^static inline void stosl(void *addr, int data, int cnt) {$/;"	f	file:
+threadID	dat.h	/^  int threadID;$/;"	m	struct:Region
+tlbflush	cpufunc.h	/^tlbflush(void)$/;"	f
+top	dat.h	/^  long top;$/;"	m	struct:Arena
+turfID	dat.h	/^  int turfID;$/;"	m	struct:Region
+u16	u.h	/^typedef unsigned short u16;$/;"	t
+u32	u.h	/^typedef unsigned int u32;$/;"	t
+u64	u.h	/^typedef unsigned long long u64;$/;"	t
+u8	u.h	/^typedef unsigned char u8;$/;"	t
+upb	dat.h	/^  long upb;$/;"	m	struct:Arena
+upb	dat.h	/^  long upb;$/;"	m	struct:Region
+wbinvd	cpufunc.h	/^wbinvd(void)$/;"	f
+write_eflags	cpufunc.h	/^write_eflags(u32 ef)$/;"	f
+wrmsr	cpufunc.h	/^wrmsr(u32 msr, u64 newval)$/;"	f
+wrmsr_locked	cpufunc.h	/^wrmsr_locked(u32 msr, u32 code, u64 newval)$/;"	f
