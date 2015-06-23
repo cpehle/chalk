@@ -15,12 +15,10 @@ void cputc(Console cons, int c) {
   } else {
     cons->buf[cons->pos++] = c | (cons->color << 8);
   }
-
   if ((cons->pos / 80) >= 24) {
-
     mmove(cons->buf, cons->buf + 80, sizeof(cons->buf[0]) * 23 * 80);
     cons->pos -= 80;
-    mset(cons->buf + cons->pos, 0,
+    miset(cons->buf + cons->pos, (cons->color<<24 | cons->color << 8),
            sizeof(cons->buf[0]) * (24 * 80 - cons->pos));
   }
 }
@@ -37,20 +35,22 @@ void cprintint(Console c, int xx, int base, int sign)
   char buf[16];
   int i;
   unsigned int x;
-
-  if(sign && (sign = xx < 0))
+  if (base > 16) {
+    base = 16;
+  }
+  if(sign && (sign = xx < 0)) {
     x = -xx;
-  else
+  } else {
     x = xx;
-
+  }
   i = 0;
-  do{
+  do {
     buf[i++] = digits[x % base];
-  }while((x /= base) != 0);
-
-  if(sign)
+  } while((x /= base) != 0);
+  if (sign) {
     buf[i++] = '-';
-
-  while(--i >= 0)
+  }
+  while (--i >= 0) {
     cputc(c, buf[i]);
+  }
 }

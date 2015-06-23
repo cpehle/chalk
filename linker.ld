@@ -40,7 +40,7 @@ SECTIONS
         *(.bss)
         *(.bootstrap_stack)
         bootstrap_stack_end = .;
-         . += 2M - (bss_start + bootstrap_stack_end);
+         . += 0x150000 - (bss_start + bootstrap_stack_end);
          kernel_image.o(.rawdata)
     }
 

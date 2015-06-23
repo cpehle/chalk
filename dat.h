@@ -16,10 +16,14 @@ struct Arena {
 
 typedef struct ConsoleDesc {
   unsigned short pos;
-  unsigned short color;
+  unsigned char color;
   unsigned short *buf;
 } ConsoleDesc;
 typedef ConsoleDesc *Console;
+
+typedef struct Dev {
+  char *name;
+} Dev;
 
 /*
 struct Dev {

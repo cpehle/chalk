@@ -21,6 +21,13 @@ void *mset(void *dst, int c, unsigned int n) {
   return dst;
 }
 
+void *miset(void *dst, int c, unsigned int n) {
+  if ((long)dst % 4 == 0 && n % 4 == 0) {
+    stosl(dst, c, n / 4);
+  }
+  return dst;
+}
+
 void *mmove(void *dst, const void *src, unsigned int n) {
   const char *s;
   char *d;

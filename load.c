@@ -50,6 +50,30 @@ typedef struct {
   u16 e_shstrndx;
 } Elf64_Ehdr;
 
+typedef struct {
+  u32 p_type;
+  u32 p_flags;
+  Elf64_Off p_offset;
+  Elf64_Addr p_vaddr;
+  Elf64_Addr p_paddr;
+  u64 p_filesz;
+  u64 p_memsz;
+  u64 p_align;
+} Elf64_Phdr;
+
+typedef struct {
+  u32 sh_name;
+  u32 sh_type;
+  u64 sh_flags;
+  Elf64_Addr sh_addr;
+  Elf64_Off  sh_offset;
+  u64 sh_size;
+  u32 sh_link;
+  u32 sh_info;
+  u64 sh_addralign;
+  u64 sh_entsize;
+} Elf64_Shdr;
+
 struct mbheader {
   u32 magic;
   u32 flags;
@@ -118,6 +142,7 @@ int long_mode_active() {
     return (efer & X86_MSR_EFER_LMA);
 }
 
+extern char* bootstrap_stack_end;
 
 int main() {
   ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
@@ -138,27 +163,46 @@ int main() {
     pd[i] = pde;
     pde += 0x200000;
   }
-  // We arranged the linker to put the 64bit elf file at 0x200000
-  // and managed to convince GRUB to load it for us....
-  // whether or not that was such a great idea is another question.
-  Elf64_Ehdr *ehdr = (Elf64_Ehdr *)((void *)0x200000);
-  if (ehdr->e_ident[0] != 0x7f ||
-      ehdr->e_ident[1] != 'E' ||
-      ehdr->e_ident[2] != 'L' ||
-      ehdr->e_ident[3] != 'F'
-    ) {
-    cprint(c, "Invalid ELF Magic!\n");
-    for (;;);
+
+  {
+    // We arranged the linker to put the 64bit elf file at bootrstrap_stack_end
+    // and managed to convince GRUB to load it for us....
+    // whether or not that was such a great idea is another question.
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x150000);
+    if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
+        ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
+      cprint(c, "Invalid ELF Magic!\n");
+      for (;;)
+        ;
+    }
+    for (int i = 0; i < 4; ++i) {
+      cputc(c, ehdr->e_ident[i]);
+    }
+    if (!(ehdr->e_machine == 0x3E)) {
+      cprint(c, "Expected x86_64-ELF.\n");
+    }
+    cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
+    cprint(c, "\nNumber of entries in program section "),
+        cprintint(c, ehdr->e_phnum, 16, 0);
+    Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
+    cprint(c, "\nType of entry in Program Header: "),
+        cprintint(c, phdr->p_type, 16, 0);
+    cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
+    cprint(c, "\nExpects to be loaded at virtual address: "),
+        cprintint(c, phdr->p_vaddr, 16, 0);
+    cprint(c, "\nExpects to be loaded at physical address: "),
+        cprintint(c, phdr->p_paddr, 16, 0);
+    cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
+    cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
+    cprint(c, "\nSize of entries in program section "),
+        cprintint(c, ehdr->e_phentsize, 16, 0);
+    cputc(c, '\n');
+    // entry is where this code expects to be loaded.
+    u64 entry = ehdr->e_entry;
+    // that doesn't really work though...
   }
-  for(int i = 0; i < 4; ++i) {
-    cputc(c, ehdr->e_ident[i]);
-  }
-  u64 entry = ehdr->e_entry;
-  cprint(c, "\nJump to "), cprintint(c, entry, 16, 0), cputc(c,'\n');
-  // that doesn't really work though...
 
   // We should check support for long mode via cpu id here
-  //
   // This sequence to enable long mode is documented in the AMD Manual for example.
   disable_paging();
   enable_pae_mode();
@@ -172,17 +216,13 @@ int main() {
   cprint(c, "We have enabled long mode!\n");
   // Actually this is not quite true, in fact we need to
   // do a long jump at some point for it to actually work.
-  pci_scan(c);
+  // pci_scan(c);
   // need to find ahci in order to load kernel from disk.
 
-
   // We now need to figure out where the 64bit code is and jump to it.
-
-
-
   GDTEntry entries[3] = {{0, 0},                    // Null descriptor
-                                        {0x00000000, 0xffffffff},  // Code, R/X, Nonconforming
-                                        {0x00000000, 0xffffffff}}; // Data, R/W, Expand Down
+                         {0x00000000, 0xffffffff},  // Code, R/X, Nonconforming
+                         {0x00000000, 0xffffffff}}; // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
