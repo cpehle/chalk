@@ -1,7 +1,24 @@
+typedef enum {
+        PciBarInvalid,
+        PciBarM16,
+        PciBarM32,
+        PciBarM64,
+        PciBarIO
+} PciBarTag;
 
-typedef struct PciDev {
-        Dev dev;
-} PciDev;
+
+typedef struct PciBar
+{
+
+    union
+    {
+        void *address;
+        u16 port;
+    } u;
+    u64 size;
+    unsigned int flags;
+    PciBarTag tag;
+} PciBar;
 
 typedef struct PciBridgeConf {
         u32 base_address_register[2];
@@ -37,17 +54,12 @@ typedef struct PciBridgeConf {
 } PciBridgeConf;
 
 typedef struct PciDevConf {
-        u32 base_address_register[6];
-
+        PciBar base_address_register[6];
         u32 cardbus_cis_ptr;
-
         u16 subsystem;
         u16 subsystem_vendor;
-
         u32 expansion_rom_base_address;
-
         u8 capability_ptr;
-
         u8 max_latency;
         u8 min_grant;
         u8 interrupt_pin;
@@ -78,5 +90,7 @@ typedef struct PciConf {
         };
 } PciConf;
 
-PciConf pci_read_conf();
-void pci_scan(Console c);
+
+
+PciConf pciconfread(u8 bus, u8 slot);
+void pciscan(Console c);

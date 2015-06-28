@@ -1,9 +1,11 @@
 #include "u.h"
-#include "io.h"
 #include "dat.h"
+#include "io.h"
+#include "pci.h"
 #include "console.h"
 
 // Configuration method one.
+// won't support method two for now, as it is deprecated.
 static const int pci_address_ioport = 0x0cf8;
 static const int pci_data_ioport = 0x0cfc;
 
@@ -15,7 +17,7 @@ static const int pci_data_ioport = 0x0cfc;
 // 23 - 16	Bus number = 256 options
 // 15 - 11	Device/Slot number = 32 options
 // 10 - 8	Function number = will leave at 0 (8 options)
-// 7 - 2        Register number = will leave at 0 (64 options) 64 x 4 bytes =
+// 7 - 2    Register number = will leave at 0 (64 options) 64 x 4 bytes =
 // 256 bytes worth of accessible registers
 // 1 - 0	Set to 0
 void write_pci(u32 bus, u32 slot, u32 function, u32 reg, u32 data) {
@@ -30,8 +32,54 @@ u32 read_pci(u32 bus, u32 slot, u32 function, u32 reg) {
   return inl(pci_data_ioport);
 }
 
-pci_conf_t pci_conf_read(u8 bus, u8 slot) {
-        pci_conf_t conf = {};
+static void pcibar0(u32 bus, u32 slot, u32 func, u32 index, u32 *address,
+                    u32 *mask) {
+  u32 reg = 0x10 + index * sizeof(u32);
+  *address = read_pci(bus, slot, func, reg);
+  write_pci(bus, slot, func, reg, 0xffffffff);
+  *mask = read_pci(bus, slot, func, reg);
+  write_pci(bus, slot, func, reg, *address);
+}
+
+static PciBar pcibar(u32 bus, u32 slot, u32 func, u32 index) {
+  u32 al, ml;
+  u64 a;
+  u64 size;
+  u8 flags;
+  PciBar res = {.u = {}, .size = 0, .flags = 0, .tag = PciBarInvalid};
+  pcibar0(bus, slot, func, index, &al, &ml);
+  // the memory space bar layout is
+  // 31 - 4                       | 3            | 2 - 1 | 0
+  // 16-byte aligned base address | prefetchable | Type  | 0
+  // the i/o space bar layout is
+  // 31 - 2                      | 1        | 0
+  // 4-byte aligned base address | reserved | 1
+  if (al & 0x1) { // i/o space
+    res.u.port = (u16)(al & ~0x3);
+    res.size = (u16)(~(ml & ~0x3) + 1);
+    res.flags = al & 0x3;
+    res.tag = PciBarIO;
+  } else {
+    if (al & 0x4) { // 64-bit
+      u32 ah, mh;
+      pcibar0(bus, slot, func, index, &ah, &mh);
+      res.u.address = (void *)((((u64)ah) << 32) | (al & ~0xf));
+      res.size = ~(((u64)mh << 32) | (ml & ~0xf)) + 1;
+      res.flags = al & 0xf;
+      res.tag = PciBarM64;
+    } else if (~(al & 0x6)) { // 32-bit
+      res.u.address = (void *)(al & ~0xf);
+      res.size = ~(ml & ~0xf) + 1;
+      res.flags = al & 0xf;
+      res.tag = PciBarM32;
+    } else { // 16-bit
+    }
+  }
+  return res;
+}
+
+PciConf pciconfread(u8 bus, u8 slot) {
+  PciConf conf = {};
   u8 func = 0;
   u32 val = read_pci(bus, slot, func, 0x00);
   conf.vendor_id = val & 0xffff;
@@ -58,9 +106,8 @@ pci_conf_t pci_conf_read(u8 bus, u8 slot) {
   case 0x00:
     // standard header type:
     {
-      u8 reg = 0x10;
-      for (int i = 0; i < 6; i++, reg += 4) {
-        conf.dev.base_address_register[i] = read_pci(bus, slot, func, reg);
+      for (int i = 0; i < 6; i++) {
+        conf.dev.base_address_register[i] = pcibar(bus, slot, func, i);
       }
       conf.dev.cardbus_cis_ptr = read_pci(bus, slot, func, 0x28);
       val = read_pci(bus, slot, func, 0x2c);
@@ -88,16 +135,48 @@ pci_conf_t pci_conf_read(u8 bus, u8 slot) {
   return conf;
 }
 
-void pci_scan(Console c) {
+void pciscan(Console c) {
   for (u8 bus = 0; bus < 255; bus++) {
     for (u8 dev = 0; dev < 32; dev++) {
-      pci_conf_t conf = pci_conf_read(bus, dev);
+      PciConf conf = pciconfread(bus, dev);
       if ((conf.device_id == 0xffff) || (conf.vendor_id == 0xffff)) {
         continue;
       }
-      cprint(c, "pci: bus: "), cprintint(c, bus, 16, 0), cputc(c,'\n');
-      cprint(c, "device id: "), cprintint(c, conf.device_id, 16, 0), cputc(c,'\n');
-      cprint(c, "vendor id: "), cprintint(c, conf.vendor_id, 16, 0), cputc(c,'\n');
+      cprint(c, "pci(bus,dev): ("), cprintint(c, bus, 16, 0), cputc(c, ','),
+          cprintint(c, dev, 16, 0), cputc(c, ')'), cputc(c, '\n');
+      cprint(c, "device id: "), cprintint(c, conf.device_id, 16, 0),
+          cputc(c, '\n');
+      cprint(c, "vendor id: "), cprintint(c, conf.vendor_id, 16, 0),
+          cputc(c, '\n');
+      for (int i = 0; i < 6; ++i) {
+        u64 size = conf.dev.base_address_register[i].size;
+        if (size) {
+          switch (conf.dev.base_address_register[i].tag) {
+          case PciBarInvalid: {
+            cprint(c, " Invalid bar:");
+            break;
+          }
+          case PciBarM16: {
+            cprint(c, " M16 Bar:");
+            break;
+          }
+          case PciBarM32: {
+            cprint(c, " M32 Bar:");
+            break;
+          }
+          case PciBarM64: {
+            cprint(c, " M64 Bar:");
+            break;
+          }
+          case PciBarIO: {
+            cprint(c, " IO Bar:");
+            break;
+          }
+          }
+          cprintint(c, conf.dev.base_address_register[i].size, 16, 0);
+        }
+      }
+      cputc(c, '\n');
     }
   }
 }

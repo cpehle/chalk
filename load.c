@@ -5,6 +5,9 @@
 #include "cpu.h"
 #include "cpufunc.h"
 #include "pci.h"
+#include "arena.h"
+#include "ahci.h"
+#include "e1000.h"
 
 #define X86_MSR_EFER                		0xC0000080
 
@@ -144,63 +147,73 @@ int long_mode_active() {
 
 extern char* bootstrap_stack_end;
 
+
 int main() {
   ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
   Console c = &cd;
   cclear(c, 0xff);
   cprint(c, bootmsg);
-  // clear the memory from 0x1000 to 0x4000
+  // clear the memory from 0x1000 to 0x7000
   // we will store the bootstrap page tables
-  // here.
-  mset((void *)0x1000, 0, 4000);
+  // here. We will map the first 4 gigabytes, this is rather careless if there
+  // isn't actually that much memory in the machine.
+  mset((void *)0x1000, 0, 7000);
   u64 *p4ml = (u64 *)(0x1000);
   u64 *pdpt = (u64 *)(0x2000);
-  u64 *pd = (u64 *)(0x3000);
+  u64 *pd[4] = {(u64 *)(0x3000), (u64 *)0x4000, (u64 *)0x5000, (u64 *)0x6000};
   p4ml[0] = 0x2000 | 3;
   pdpt[0] = 0x3000 | 3;
+  pdpt[1] = 0x4000 | 3;
+  pdpt[2] = 0x5000 | 3;
+  pdpt[3] = 0x6000 | 3;
   u64 pde = 0x83;
-  for (int i = 0; i < 512; ++i) {
-    pd[i] = pde;
-    pde += 0x200000;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 512; ++j) {
+      pd[i][j] = pde;
+      pde += 0x200000;
+    }
   }
 
-  {
-    // We arranged the linker to put the 64bit elf file at bootrstrap_stack_end
-    // and managed to convince GRUB to load it for us....
-    // whether or not that was such a great idea is another question.
-    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x150000);
-    if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
-        ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
-      cprint(c, "Invalid ELF Magic!\n");
-      for (;;)
-        ;
-    }
-    for (int i = 0; i < 4; ++i) {
-      cputc(c, ehdr->e_ident[i]);
-    }
-    if (!(ehdr->e_machine == 0x3E)) {
-      cprint(c, "Expected x86_64-ELF.\n");
-    }
-    cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
-    cprint(c, "\nNumber of entries in program section "),
-        cprintint(c, ehdr->e_phnum, 16, 0);
-    Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
-    cprint(c, "\nType of entry in Program Header: "),
-        cprintint(c, phdr->p_type, 16, 0);
-    cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
-    cprint(c, "\nExpects to be loaded at virtual address: "),
-        cprintint(c, phdr->p_vaddr, 16, 0);
-    cprint(c, "\nExpects to be loaded at physical address: "),
-        cprintint(c, phdr->p_paddr, 16, 0);
-    cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
-    cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
-    cprint(c, "\nSize of entries in program section "),
-        cprintint(c, ehdr->e_phentsize, 16, 0);
-    cputc(c, '\n');
-    // entry is where this code expects to be loaded.
-    u64 entry = ehdr->e_entry;
-    // that doesn't really work though...
+  // We arranged the linker to put the 64bit elf file at bootrstrap_stack_end
+  // and managed to convince GRUB to load it for us....
+  // whether or not that was such a great idea is another question.
+  Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x200000);
+  if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
+      ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
+    cprint(c, "Invalid ELF Magic!\n");
   }
+  Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
+  Elf64_Phdr *ephdr = phdr + ehdr->e_phnum;
+  for (; phdr < ephdr; phdr++) {
+    u8 *pa = (u8 *)phdr->p_paddr;
+    // readseg(pa, phdr->p_filesz, phdr->p_offset);
+  }
+
+  for (int i = 0; i < 4; ++i) {
+    cputc(c, ehdr->e_ident[i]);
+  }
+  if (!(ehdr->e_machine == 0x3E)) {
+    cprint(c, "Expected x86_64-ELF.\n");
+  }
+  cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
+  cprint(c, "\nNumber of entries in program section "),
+      cprintint(c, ehdr->e_phnum, 16, 0);
+
+  cprint(c, "\nType of entry in Program Header: "),
+      cprintint(c, phdr->p_type, 16, 0);
+  cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
+  cprint(c, "\nExpects to be loaded at virtual address: "),
+      cprintint(c, phdr->p_vaddr, 16, 0);
+  cprint(c, "\nExpects to be loaded at physical address: "),
+      cprintint(c, phdr->p_paddr, 16, 0);
+  cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
+  cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
+  cprint(c, "\nSize of entries in program section "),
+      cprintint(c, ehdr->e_phentsize, 16, 0);
+  cputc(c, '\n');
+  // entry is where this code expects to be loaded.
+  u64 entry = ehdr->e_entry;
+  // that doesn't really work though...
 
   // We should check support for long mode via cpu id here
   // This sequence to enable long mode is documented in the AMD Manual for example.
@@ -214,9 +227,10 @@ int main() {
     for(;;);
   }
   cprint(c, "We have enabled long mode!\n");
+
   // Actually this is not quite true, in fact we need to
   // do a long jump at some point for it to actually work.
-  // pci_scan(c);
+  //ahcipciinit(0, c, 0, 4);
   // need to find ahci in order to load kernel from disk.
 
   // We now need to figure out where the 64bit code is and jump to it.
@@ -226,6 +240,18 @@ int main() {
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
+
+  pciscan(c);
+  PciConf eth = pciconfread(0, 3);
+  e1000init(0, &eth, c);
+
+  u8* addr = (u8*)0xfebc0000;
+  u8 res = addr[0];
+  cputc(c, res);
+
+  cprint(c, "Hello World.");
+  for(;;);
+
   u8* startup64;
 
   for(;;);
@@ -238,5 +264,8 @@ int main() {
                                          */
       :                               /* No Output */
       : "r"(INIT32_CS), "i"(INIT32_CS), "m"(*startup64), "r"(0));
+
   for (;;);
+
+  return 0;
 }

@@ -7,13 +7,6 @@ struct Region {
   int threadID;
 };
 
-typedef struct Arena Arena;
-struct Arena {
-  long lwb;
-  long upb;
-  long top;
-};
-
 typedef struct ConsoleDesc {
   unsigned short pos;
   unsigned char color;
