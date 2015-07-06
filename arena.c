@@ -1,7 +1,6 @@
 #include "u.h"
 #include "arena.h"
 
-typedef u32 size_t;
 
 typedef struct TemporaryMemory
 {
@@ -11,7 +10,7 @@ typedef struct TemporaryMemory
 
 
 inline void
-arena_init(Arena *a, size_t size, void *base)
+arenainit(Arena *a, size_t size, void *base)
 {
     a->size = size;
     a->base = (u8 *)base;
@@ -20,7 +19,7 @@ arena_init(Arena *a, size_t size, void *base)
 }
 
 inline size_t
-arena_get_alignment_offset(Arena *a, size_t alignment)
+arenagetalignementoffset(Arena *a, size_t alignment)
 {
     size_t alignment_offset = 0;
 
@@ -35,32 +34,31 @@ arena_get_alignment_offset(Arena *a, size_t alignment)
 }
 
 inline size_t
-GetArenasizeRemaining(Arena *a, size_t Alignment = 4)
+getarenasizeremaining(Arena *a, size_t alignment)
 {
-    size_t res = a->size - (a->used + arena_get_alignment_offset(a, Alignment));
-
+    size_t res = a->size - (a->used + arenagetalignementoffset(a, alignment));
     return(res);
 }
 
-inline void *
-arena_push_size_(Arena *a, size_t sizeInit, size_t Alignment = 4)
+
+inline void* arenapushsize_(Arena *a, size_t sizeInit, size_t alignment)
 {
     size_t size = sizeInit;
 
-    size_t AlignmentOffset = arena_get_alignment_offset(a, Alignment);
+    size_t AlignmentOffset = arenagetalignementoffset(a, alignment);
     size += AlignmentOffset;
 
-    Assert((a->used + size) <= a->size);
+    // Assert((a->used + size) <= a->size);
     void *res = a->base + a->used + AlignmentOffset;
     a->used += size;
 
-    Assert(size >= sizeInit);
+    // Assert(size >= sizeInit);
 
     return(res);
 }
 
 inline TemporaryMemory
-BeginTemporaryMemory(Arena *a)
+begintemporarymemory(Arena *a)
 {
     TemporaryMemory r;
 
@@ -69,30 +67,30 @@ BeginTemporaryMemory(Arena *a)
 
     ++a->temp_count;
 
-    return(res);
+    return r;
 }
 
 inline void
-EndTemporaryMemory(TemporaryMemory TempMem)
+endtemporarymemory(TemporaryMemory TempMem)
 {
-    Arena *Arena = TempMem.Arena;
-    Assert(Arena->used >= TempMem.used);
+    Arena *Arena = TempMem.arena;
+    // Assert(Arena->used >= TempMem.used);
     Arena->used = TempMem.used;
-    Assert(Arena->temp_count > 0);
+    // Assert(Arena->temp_count > 0);
     --Arena->temp_count;
 }
 
 inline void
-CheckArena(Arena *Arena)
+checkarena(Arena *Arena)
 {
-    Assert(Arena->temp_count == 0);
+    // Assert(Arena->temp_count == 0);
 }
 
 inline void
-SubArena(Arena *res, Arena *Arena, size_t size, size_t Alignment = 16)
+subarena(Arena *res, Arena *a, size_t size, size_t Alignment)
 {
     res->size = size;
-    res->base = (uint8 *)Pushsize_(Arena, size, Alignment);
+    res->base = (u8 *)arenapushsize_(a, size, Alignment);
     res->used = 0;
     res->temp_count = 0;
 }

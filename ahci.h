@@ -1,1 +1,1 @@
-void ahcipciinit(Console c, u8 bus, u8 slot);
+void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot);

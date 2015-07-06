@@ -7,6 +7,7 @@
 #include "pci.h"
 #include "arena.h"
 #include "ahci.h"
+#include "idt.h"
 #include "e1000.h"
 
 #define X86_MSR_EFER                		0xC0000080
@@ -92,7 +93,7 @@ struct mbheader {
 
 static char* bootmsg = "Chalk.\n";
 
-void disable_paging() {
+void disablepaging() {
   u32 val = X86_CR0_PG;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -102,7 +103,7 @@ void disable_paging() {
                        : "ri"(~val));
 }
 
-void enable_paging() {
+void enablepaging() {
   u32 val = X86_CR0_PG | X86_CR0_WP | X86_CR0_PE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -112,7 +113,7 @@ void enable_paging() {
                        : "ri"(val));
 }
 
-void enable_pae_mode() {
+void enablepaemode() {
   u32 val = X86_CR4_PAE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr4, %0   \n"
@@ -122,7 +123,7 @@ void enable_pae_mode() {
                        : "ri"(val));
 }
 
-void enable_long_mode() {
+void enablelongmode() {
   u32 efer = rdmsr(0xc0000080);
   efer |= (1 << 8);
   wrmsr(0xc0000080, efer);
@@ -134,13 +135,13 @@ u32 get_active_pagetable(void) {
     return pgm;
 }
 
-void set_active_pagetable(u32 root) {
+void setactivepagetable(u32 root) {
    __asm__ __volatile__ ("mov %0, %%cr3 \n"
                         :
                         : "r"(root));
 }
 
-int long_mode_active() {
+int longmodeactive() {
     u32 efer = rdmsr(X86_MSR_EFER);
     return (efer & X86_MSR_EFER_LMA);
 }
@@ -157,7 +158,7 @@ int main() {
   // we will store the bootstrap page tables
   // here. We will map the first 4 gigabytes, this is rather careless if there
   // isn't actually that much memory in the machine.
-  mset((void *)0x1000, 0, 7000);
+  mset((void *)0x1000, 0, 6000);
   u64 *p4ml = (u64 *)(0x1000);
   u64 *pdpt = (u64 *)(0x2000);
   u64 *pd[4] = {(u64 *)(0x3000), (u64 *)0x4000, (u64 *)0x5000, (u64 *)0x6000};
@@ -174,65 +175,65 @@ int main() {
     }
   }
 
-  // We arranged the linker to put the 64bit elf file at bootrstrap_stack_end
-  // and managed to convince GRUB to load it for us....
-  // whether or not that was such a great idea is another question.
-  Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x200000);
-  if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
-      ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
-    cprint(c, "Invalid ELF Magic!\n");
-  }
-  Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
-  Elf64_Phdr *ephdr = phdr + ehdr->e_phnum;
-  for (; phdr < ephdr; phdr++) {
-    u8 *pa = (u8 *)phdr->p_paddr;
-    // readseg(pa, phdr->p_filesz, phdr->p_offset);
-  }
 
-  for (int i = 0; i < 4; ++i) {
-    cputc(c, ehdr->e_ident[i]);
-  }
-  if (!(ehdr->e_machine == 0x3E)) {
-    cprint(c, "Expected x86_64-ELF.\n");
-  }
-  cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
-  cprint(c, "\nNumber of entries in program section "),
-      cprintint(c, ehdr->e_phnum, 16, 0);
+  {
+    // We arranged the linker to put the 64bit elf file at 0x200000
+    // and managed to convince GRUB to load it for us....
+    // whether or not that was such a great idea is another question.
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x200000);
+    if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
+        ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
+      cprint(c, "Invalid ELF Magic!\n");
+    }
+    Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
+    Elf64_Phdr *ephdr = phdr + ehdr->e_phnum;
+    for (; phdr < ephdr; phdr++) {
+      u8 *pa = (u8 *)phdr->p_paddr;
+      // readseg(pa, phdr->p_filesz, phdr->p_offset);
+    }
 
-  cprint(c, "\nType of entry in Program Header: "),
-      cprintint(c, phdr->p_type, 16, 0);
-  cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
-  cprint(c, "\nExpects to be loaded at virtual address: "),
-      cprintint(c, phdr->p_vaddr, 16, 0);
-  cprint(c, "\nExpects to be loaded at physical address: "),
-      cprintint(c, phdr->p_paddr, 16, 0);
-  cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
-  cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
-  cprint(c, "\nSize of entries in program section "),
-      cprintint(c, ehdr->e_phentsize, 16, 0);
-  cputc(c, '\n');
-  // entry is where this code expects to be loaded.
-  u64 entry = ehdr->e_entry;
+    for (int i = 0; i < 4; ++i) {
+      cputc(c, ehdr->e_ident[i]);
+    }
+    if (!(ehdr->e_machine == 0x3E)) {
+      cprint(c, "Expected x86_64-ELF.\n");
+    }
+    cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
+    cprint(c, "\nNumber of entries in program section "),
+        cprintint(c, ehdr->e_phnum, 16, 0);
+
+    cprint(c, "\nType of entry in Program Header: "),
+        cprintint(c, phdr->p_type, 16, 0);
+    cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
+    cprint(c, "\nExpects to be loaded at virtual address: "),
+        cprintint(c, phdr->p_vaddr, 16, 0);
+    cprint(c, "\nExpects to be loaded at physical address: "),
+        cprintint(c, phdr->p_paddr, 16, 0);
+    cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
+    cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
+    cprint(c, "\nSize of entries in program section "),
+        cprintint(c, ehdr->e_phentsize, 16, 0);
+    cputc(c, '\n');
+    // entry is where this code expects to be loaded.
+    u64 entry = ehdr->e_entry;
+  }
   // that doesn't really work though...
-
-  // We should check support for long mode via cpu id here
+  // We should check support for long mode via cpu id here!
   // This sequence to enable long mode is documented in the AMD Manual for example.
-  disable_paging();
-  enable_pae_mode();
-  enable_long_mode();
-  set_active_pagetable(0x1000);
-  enable_paging();
-  if (!long_mode_active()) {
+  disablepaging();
+  enablepaemode();
+  enablelongmode();
+  setactivepagetable(0x1000);
+  enablepaging();
+  if (!longmodeactive()) {
     cprint(c, "Failed to enable long mode.");
     for(;;);
   }
   cprint(c, "We have enabled long mode!\n");
-
   // Actually this is not quite true, in fact we need to
   // do a long jump at some point for it to actually work.
-  //ahcipciinit(0, c, 0, 4);
   // need to find ahci in order to load kernel from disk.
-
+  // Investigate what GDT entries we really need!
   // We now need to figure out where the 64bit code is and jump to it.
   GDTEntry entries[3] = {{0, 0},                    // Null descriptor
                          {0x00000000, 0xffffffff},  // Code, R/X, Nonconforming
@@ -240,32 +241,28 @@ int main() {
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
-
   pciscan(c);
-  PciConf eth = pciconfread(0, 3);
-  e1000init(0, &eth, c);
+  {
+    PciConf eth = pciconfread(0, 3);
+    e1000init(0, &eth, c);
+  }
+  // Random arena code.
+  // Need to write proper tests!
+  {
+    Arena *a;
+    arenainit(a, 4000000, (void *)0x1000000);
+    int *x = arenapusharray(a, 1000, int);
+    int *y = arenapusharray(a, 1000, int);
+    for (int i = 0; i < 1000; ++i) {
+      x[i] = y[i] = 1;
+    }
+    for (int i = 0; i < 1000; ++i) {
+      x[i] += y[i];
+    }
+    cprintint(c, x[400], 16, 0), cputc(c, '\n');
+  }
+  ahcipciinit(0, c, 0, 4);
 
-  u8* addr = (u8*)0xfebc0000;
-  u8 res = addr[0];
-  cputc(c, res);
-
-  cprint(c, "Hello World.");
   for(;;);
-
-  u8* startup64;
-
-  for(;;);
-  __asm__  __volatile__ ("	mov  %0, %%ds		\n\t"
-      "	pushw %1		\n\t" /* push segment selector, used by ljmp */
-      "	lea %2, %%eax   	\n\t" /* load startup_system */
-      "	pushl %%eax		\n\t" /* load startup_system */
-      "     movl %3, %%edi          \n\t" /* pass AP info to startup_system */
-      "	ljmp *(%%esp)		\n\t" /* jump to startup_system and load new CS
-                                         */
-      :                               /* No Output */
-      : "r"(INIT32_CS), "i"(INIT32_CS), "m"(*startup64), "r"(0));
-
-  for (;;);
-
   return 0;
 }

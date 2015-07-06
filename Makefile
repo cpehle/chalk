@@ -11,7 +11,7 @@ QEMUFLAGS:=-enable-kvm -serial mon:stdio -smp 2 -m 512 -drive file=disk.img,if=n
 QEMU:=qemu-system-x86_64
 
 OBJS := main.o start64.o
-OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o
+OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o arena.o
 
 default: kernel.bin
 	mkdir -p isodir
@@ -44,6 +44,10 @@ pci.o: pci.c pci.h
 ahci.o: ahci.c ahci.h
 	$(CC32) $(CFLAGS32) -c $<
 e1000.o: e1000.c e1000.h
+	$(CC32) $(CFLAGS32) -c $<
+interrupts.o: interrupts.s
+	$(CC32) $(CFLAGS32) interrupts.s -c -o interrupts.o
+arena.o: arena.c arena.h
 	$(CC32) $(CFLAGS32) -c $<
 
 %.o: %.c

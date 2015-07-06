@@ -7,8 +7,15 @@ typedef struct Arena
         s32 temp_count;
 } Arena;
 
+typedef struct TemporaryMemory TemporaryMemory;
+
 // TODO(casey): Optional "clear" parameter!!!!
-#define arena_push_struct(Arena, type) (type *)arena_push_size_(Arena, sizeof(type))
-#define arena_push_array(Arena, Count, type) (type *)arena_push_size_(Arena, (Count)*sizeof(type))
-#define arena_push_size(Arena, size) arena_push_size_(Arena, size)
-inline void* arena_push_size_(Arena *a, unsigned int sizeInit);
+#define arenapushstruct(Arena, type) (type *)arenapushsize_(Arena, sizeof(type), 16)
+#define arenapusharray(Arena, Count, type) (type *)arenapushsize_(Arena, (Count)*sizeof(type), 16)
+#define arenapushsize(Arena, size, alignment) arenapushsize_(Arena, size, alignment)
+void* arenapushsize_(Arena *a, size_t sizeInit, size_t alignment);
+
+void arenainit(Arena *a, size_t size, void *base);
+TemporaryMemory begintemporarymemory(Arena *a);
+void endtemporarymemory(TemporaryMemory TempMem);
+void subarena(Arena *res, Arena *a, size_t size, size_t alignment);

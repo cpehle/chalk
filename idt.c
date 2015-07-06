@@ -2,9 +2,9 @@
 #include "idt.h"
 #include "cpufunc.h"
 
-void default_exception_handler();
-void default_interrupt_handler();
-void (*exceptionhandlers[20])() = {};
+extern void default_exception_handler();
+extern void default_interrupt_handler();
+extern void (*exception_handlers[20])();
 
 typedef struct Idtentry {
   u16 offset0;
@@ -22,7 +22,7 @@ typedef struct Idtdesc {
 
 void idtinit() {
   for (int i = 0; i < 20; ++i) {
-    idtsethandler(i, InterruptGate, exceptionhandlers[i]);
+    idtsethandler(i, InterruptGate, exception_handlers[i]);
   }
   for (int i = 20; i < 32; ++i) {
     idtsethandler(i, InterruptGate, default_exception_handler);

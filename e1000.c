@@ -127,9 +127,9 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   mmio[Rctrl / 4] |= CtrlSLU;        // set link up
   mset(mmio + Rmta / 4, 0, 4 * 128); // clear multicast table
                                      // TODO: clear all interrupts
-  RecvDesc *rx = arena_push_array(a, Nrx, RecvDesc);
+  RecvDesc *rx = arenapusharray(a, Nrx, RecvDesc);
   for (int i = 0; i < Nrx; ++i) {
-    rx[i].addr = (u64)arena_push_array(a, 2048, u8);
+    rx[i].addr = (u64)arenapusharray(a, 2048, u8);
     rx[i].status = 0;
   }
   mmio[Rrdbal / 4] = (u64)rx;
@@ -140,7 +140,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   mmio[Rrctl / 4] = Rctl_EN | Rctl_SBP | Rctl_UPE | Rctl_MPE | Rctl_LBM_NONE |
                      RTCL_RDMTS_HALF | Rctl_BAM | Rctl_SECRC | Rctl_BSIZE_2048;
 
-  TransDesc *tx = arena_push_array(a, Ntx, TransDesc);
+  TransDesc *tx = arenapusharray(a, Ntx, TransDesc);
   mset(tx,0,Ntx*sizeof(TransDesc));
   for (int i = 0; i<Ntx; ++i) {
           tx[i].status = (1<<0);

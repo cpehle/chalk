@@ -7,3 +7,6 @@ typedef long long s64;
 typedef int s32;
 typedef short s16;
 typedef char s8;
+
+
+typedef u32 size_t;

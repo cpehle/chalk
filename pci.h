@@ -31,22 +31,17 @@ typedef struct PciBridgeConf {
         u16 secondary_status;
         u8 io_limit;
         u8 io_base;
-
         u16 memory_limit;
         u16 memory_base;
-
         // the next four values should probably be merged.
         u16 prefetchable_memory_limit;
         u16 prefetchable_memory_base;
-
         u16 prefetchable_base_upper;
         u16 prefetchable_limit_upper;
         // and those with io_limit, io_base
         u8 io_limit_upper;
         u8 io_base_upper;
-
         u8 capability_ptr;
-
         u32 expansion_rom_address;
         u16 bridge_control;
         u8 interrupt_pin;
@@ -69,10 +64,8 @@ typedef struct PciDevConf {
 typedef struct PciConf {
         u16 device_id;
         u16 vendor_id;
-
         u16 status_reg;
         u16 command_reg;
-
         u8 class_code;
         u8 subclass;
         u8 prog_if;
