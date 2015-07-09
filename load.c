@@ -3,12 +3,15 @@
 #include "mem.h"
 #include "console.h"
 #include "cpu.h"
+#include "detect.h"
 #include "cpufunc.h"
 #include "pci.h"
 #include "arena.h"
 #include "ahci.h"
 #include "idt.h"
 #include "e1000.h"
+#include "vesa.h"
+#include "vec.h"
 
 #define X86_MSR_EFER                		0xC0000080
 
@@ -262,7 +265,37 @@ int main() {
     cprintint(c, x[400], 16, 0), cputc(c, '\n');
   }
   ahcipciinit(0, c, 0, 4);
+  // cclear(c, White);
+  cpudetect(c);
 
+  V4 v = {1,0,0,0};
+  V4 w = {0,1,0,0};
+  V4 u = v4avv(v,w);
+  cprintv4(c, u);
+  cprintv4(c, v4msv(2, u));
+  cprintv4(c, v4mmv(m44i(), u));
+  cprintm44(c, m44i());
+  cprintm44(c, v4msm(2, m44i()));
+  cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
+  for (;;);
+
+
+  {
+    u32 *framebufferaddr;
+    {
+      // 0x1234:0x1111
+      PciConf vesa = pciconfread(0, 2);
+      framebufferaddr = (u32 *)vesa.dev.base_address_register[0].address;
+    }
+
+    vbe_set(1600, 1200, 32);
+    int offset = 0;
+    for (int i = 0; i < 1600; ++i) {
+      offset = (50 * 1600 + i);
+      // Format is 0x00rrggbb, can use first byte for alpha blending
+      framebufferaddr[offset] = 0x00ff0000;
+    }
+  }
   for(;;);
   return 0;
 }

@@ -10,12 +10,14 @@
 #define SATA_SIG_ATAPI 0xEB140101 // SATAPI drive
 #define SATA_SIG_SEMB 0xC33C0101  // Enclosure management bridge
 #define SATA_SIG_PM 0x96690101    // Port multiplier
+
 enum {
   AHCI_CMD_IOSE = (1 << 0),
   AHCI_CMD_MSE = (1 << 1),
   AHCI_CMD_BME = (1 << 2),
   AHCI_CMD_SCE = (1 << 3)
 };
+
 // Logic block addressing (LBA)
 enum {
   AHCI_PxCMD_ST = (1 << 0),
@@ -26,6 +28,7 @@ enum {
   AHCI_PxCMD_FR = (1 << 14),
   AHCI_PxCMD_CR = (1 << 15),
 };
+
 // Frame Information Structure types (FISType)
 typedef enum {
   FIS_TYPE_REG_H2D = 0x27,   // Register FIS - host to device
@@ -37,6 +40,7 @@ typedef enum {
   FIS_TYPE_PIO_SETUP = 0x5F, // PIO setup FIS - device to host
   FIS_TYPE_DEV_BITS = 0xA1,  // Set device bits FIS - device to host
 } FISType;
+
 // The host issues commands to the device through a command list,
 // it has up to 32 slots, each of which can hold a command header.
 // The command headers describe ATA or ATAPI commands.
@@ -48,6 +52,7 @@ typedef enum {
   AHCI_CMD_LIST_FLAG_R = (1 << 8), // Reset
   AHCI_CMD_LIST_FLAG_B = (1 << 9), // BIST
 } AhciCommandListFlag;
+
 // section 3.1.1
 enum {
   AHCI_CAP_SXS = (1 << 5),   // Supports external SATA
@@ -64,6 +69,7 @@ enum {
 #define AHCI_NCS(cap)                                                          \
   (cap & ((1 << 12) - 1) & ~((1 << 7) - 1)) // Number of command slots
 #define AHCI_NP(cap) (cap & ((1 << 4) - 1)) // Number of ports
+
 // section 3.1.2
 // Global Host Control
 enum {
@@ -71,6 +77,7 @@ enum {
   AHCI_GHC_INTERRUPT_ENABLE = (1 << 1), // Interrupt enable
   AHCI_GHC_AHCI_ENABLE = (1 << 31),     // Ahci enable
 };
+
 struct SataCmdFis {
   u8 reg;
   u8 pmp_type;
@@ -90,6 +97,7 @@ struct SataCmdFis {
   u8 control;
   u8 reserved_2[64 - 16];
 };
+
 // For documentation see:
 // http://www.intel.com/content/www/us/en/io/serial-ata/serial-ata-ahci-spec-rev1_1.html
 typedef volatile struct {
@@ -149,7 +157,7 @@ typedef volatile struct {
   u8 reserved_1[48];
   struct {
     u32 basel;
-    u32 reserved_1;
+    u32 baseu;
     u32 flags;
   } prdt[];
 } AhciCommandTable;
@@ -219,15 +227,43 @@ typedef struct FisDMASetup {
   u32 reserved2;
 } __attribute__((packed)) FISDMASetup;
 
-void ahciwrite(AhciPort const *port) {}
-
-void ahciread(AhciPort const *port, u64 start, u64 size, u64 buf) {
-  // Setup command list
-
-  // Command FIS setup
-
-  // PRDT setup
+// ahci read and write
+void ahciwrite(AhciPort const *port) {
 }
+/* void ahciread(AhciPort * port, u64 start, u64 count, u64 buf) { */
+/*   // Setup command list */
+/*   port->interrupt_status = 0xffff; */
+/*   int slot = ahcifindcmdslot(port); */
+/*   u64 addr = 0; */
+/*   AhciCommandHeader *cmdheader = (AhciCommandHeader*)port->commandlist_base_addr; */
+/*   cmdheader += slot; */
+/*   cmdheader->flags |= (); */
+/*   cmdheader->prdtl = ((count-1)>>4) + 1; */
+
+/*   AhciCommandTable *cmdtbl = (AhciCommandTable*)(cmdheader->command_table_base_addr); */
+
+/*   for (int i = 0, N=cmdheader->prdtl-1; i < N; ++i) { */
+/*     cmdtbl->prdt[i].basel = buf & 0xffffffff; */
+/*     cmdtbl->prdt[i].baseu = ((buf << 32) & 0xffffffff); */
+/*     cmdtbl->prdt[i].flags = ; */
+/*     buf += 4*1024; */
+/*     count -= 16; */
+/*   } */
+
+/*   // Command FIS setup */
+/*   FISRegH2D *cmdfis = (FISRegH2D*)(&cmdtbl->fis_raw); */
+/*   cmdfis->fis_type = FIS_TYPE_REG_H2D; */
+/*   cmdfis->flags = */
+/*   cmdfis->lba0 = */
+/*   cmdfis->lba1 = */
+/*   cmdfis->lba2 = */
+/*   cmdfis->device = */
+/*   cmdfis->lba3 = */
+/*   cmdfis->lba4 = */
+/*   cmdfis->lba5 = */
+/*   cmdfis->count = count; */
+/*   // PRDT setup */
+/* } */
 
 /* u32 ahcipread(AhciPort const* port, u64 offset) { */
 /*   port-> */
@@ -239,25 +275,6 @@ int ahcipwaiteq(AhciPort const *port, u32 mask, u32 target) {
   return 1;
 }
 
-// TODO: Timeout? Need to figure out how to handle errors.
-static void ahci_start_command_engine(AhciPort *p) {
-  while (p->command_status & AHCI_PxCMD_CR)
-    ;
-  p->command_status |= AHCI_PxCMD_FRE;
-  p->command_status |= AHCI_PxCMD_ST;
-}
-// TODO: Need to figure out, if we want to time out after a while.
-static void ahci_stop_command_engine(AhciPort *p) {
-  p->command_status &= ~AHCI_PxCMD_ST;
-  while (1) {
-    if (p->command_status & AHCI_PxCMD_FR)
-      continue;
-    if (p->command_status & AHCI_PxCMD_CR)
-      continue;
-    break;
-  }
-  p->command_status &= ~AHCI_PxCMD_FRE;
-}
 
 void ahciinitdevice(Arena *m, AhciControl *const ctrl, AhciPort *const port,
                     const int portnum) {

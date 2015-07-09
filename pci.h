@@ -14,7 +14,7 @@ typedef struct PciBar
     {
         void *address;
         u16 port;
-    } u;
+    };
     u64 size;
     unsigned int flags;
     PciBarTag tag;

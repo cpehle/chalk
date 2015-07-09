@@ -14,6 +14,19 @@ typedef struct ConsoleDesc {
 } ConsoleDesc;
 typedef ConsoleDesc *Console;
 
+
+typedef struct ApciDesc {
+  Console c;
+  void *localapicaddr;
+  void *ioapicaddr;
+  const int maxcpucount;
+  int cpucount;
+  int cpuids[];
+} AcpiDesc;
+typedef AcpiDesc *Acpi;
+
+
+
 typedef struct Dev {
   char *name;
 } Dev;

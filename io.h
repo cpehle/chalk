@@ -7,10 +7,19 @@ inb(u16 port)
   return data;
 }
 
-static inline unsigned int
+static inline u32
 inl(u16 port)
 {
-  unsigned int data;
+  u32 data;
+
+  __asm__ volatile("in %1,%0" : "=a" (data) : "d" (port));
+  return data;
+}
+
+static inline u16
+inw(u16 port)
+{
+  u16 data;
 
   __asm__ volatile("in %1,%0" : "=a" (data) : "d" (port));
   return data;

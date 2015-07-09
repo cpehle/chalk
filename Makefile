@@ -7,11 +7,12 @@ CC32:=i686-elf-gcc
 CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
 CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
 AS32:=i686-elf-as
-QEMUFLAGS:=-enable-kvm -serial mon:stdio -smp 2 -m 512 -drive file=disk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 -vga std
+QEMUFLAGS:=-enable-kvm -serial mon:stdio -smp 2 -m 512 -drive file=disk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 -vga std\
+-cpu Haswell,+avx
 QEMU:=qemu-system-x86_64
 
 OBJS := main.o start64.o
-OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o arena.o
+OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o
 
 default: kernel.bin
 	mkdir -p isodir
@@ -49,6 +50,10 @@ interrupts.o: interrupts.s
 	$(CC32) $(CFLAGS32) interrupts.s -c -o interrupts.o
 arena.o: arena.c arena.h
 	$(CC32) $(CFLAGS32) -c $<
+detect.o: detect.c detect.h u.h dat.h console.h
+	$(CC32) $(CFLAGS32) -c detect.c -o detect.o
+vec.o: vec.c vec.h
+	$(CC32) $(CFLAGS32) -c vec.c -o vec.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

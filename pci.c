@@ -46,7 +46,7 @@ static PciBar pcibar(u32 bus, u32 slot, u32 func, u32 index) {
   u64 a;
   u64 size;
   u8 flags;
-  PciBar res = {.u = {}, .size = 0, .flags = 0, .tag = PciBarInvalid};
+  PciBar res = {{}, .size = 0, .flags = 0, .tag = PciBarInvalid};
   pcibar0(bus, slot, func, index, &al, &ml);
   // the memory space bar layout is
   // 31 - 4                       | 3            | 2 - 1 | 0
@@ -55,7 +55,7 @@ static PciBar pcibar(u32 bus, u32 slot, u32 func, u32 index) {
   // 31 - 2                      | 1        | 0
   // 4-byte aligned base address | reserved | 1
   if (al & 0x1) { // i/o space
-    res.u.port = (u16)(al & ~0x3);
+    res.port = (u16)(al & ~0x3);
     res.size = (u16)(~(ml & ~0x3) + 1);
     res.flags = al & 0x3;
     res.tag = PciBarIO;
@@ -63,12 +63,12 @@ static PciBar pcibar(u32 bus, u32 slot, u32 func, u32 index) {
     if (al & 0x4) { // 64-bit
       u32 ah, mh;
       pcibar0(bus, slot, func, index, &ah, &mh);
-      res.u.address = (void *)((((u64)ah) << 32) | (al & ~0xf));
+      res.address = (void *)((((u64)ah) << 32) | (al & ~0xf));
       res.size = ~(((u64)mh << 32) | (ml & ~0xf)) + 1;
       res.flags = al & 0xf;
       res.tag = PciBarM64;
     } else if (~(al & 0x6)) { // 32-bit
-      res.u.address = (void *)(al & ~0xf);
+      res.address = (void *)(al & ~0xf);
       res.size = ~(ml & ~0xf) + 1;
       res.flags = al & 0xf;
       res.tag = PciBarM32;
