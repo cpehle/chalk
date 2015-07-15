@@ -9,7 +9,9 @@ typedef struct Arena
 
 typedef struct TemporaryMemory TemporaryMemory;
 
-// TODO(casey): Optional "clear" parameter!!!!
+// TODO:
+// Alignment!
+// Clear!
 #define arenapushstruct(Arena, type) (type *)arenapushsize_(Arena, sizeof(type), 16)
 #define arenapusharray(Arena, Count, type) (type *)arenapushsize_(Arena, (Count)*sizeof(type), 16)
 #define arenapushsize(Arena, size, alignment) arenapushsize_(Arena, size, alignment)

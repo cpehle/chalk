@@ -164,4 +164,66 @@ void cpudetect(Console c)
         }
         cprint(c, "CPU Name: "), cprint(c, p), cprint(c,"\n");
     }
+
+
+  /* printf("L1_ITLB 2m\t: %u entries, %u-ass.\n" */
+  /*      "L1_DTLB 2m\t: %u entries, %u-ass.\n" */
+  /*      "L1_ITLB 4k\t: %u entries, %u-ass.\n"  */
+  /*      "L1_DTLB 4k\t: %u entries, %u-ass.\n",  */
+  /*      (word_t) l1_tlb.d.itlb_2m.entries, */
+  /*      (word_t) l1_tlb.d.itlb_2m.assoc, */
+  /*      (word_t) l1_tlb.d.dtlb_2m.entries, */
+  /*      (word_t) l1_tlb.d.dtlb_2m.assoc, */
+  /*      (word_t) l1_tlb.d.itlb_4k.entries, */
+  /*      (word_t) l1_tlb.d.itlb_4k.assoc, */
+  /*      (word_t) l1_tlb.d.dtlb_4k.entries, */
+  /*      (word_t) l1_tlb.d.dtlb_4k.assoc); */
+
+  /*   printf("L1_IACHE\t: %u B/line, %u lines/tag, %u-ass., %u KB\n"  */
+  /*      "L1_DACHE\t: %u B/line, %u lines/tag, %u-ass., %u KB\n",  */
+  /*      (word_t) l1_cache.d.icache.l_size, */
+  /*      (word_t) l1_cache.d.icache.l_per_tag, */
+  /*      (word_t) l1_cache.d.icache.assoc, */
+  /*      (word_t) l1_cache.d.icache.size, */
+  /*      (word_t) l1_cache.d.dcache.l_size, */
+  /*      (word_t) l1_cache.d.dcache.l_per_tag, */
+  /*      (word_t) l1_cache.d.dcache.assoc, */
+  /*      (word_t) l1_cache.d.dcache.size); */
+
+  /*   if (l2_2m_tlb_unified){ */
+  /*   printf("L2_TLB 2m\t: %u entries, %u-ass.\n", */
+  /*          (word_t) l2_tlb.d.itlb_2m.entries, */
+  /*          (word_t) l2_tlb.d.itlb_2m.assoc); */
+  /*   } */
+  /*   else{ */
+  /*   printf("L2_ITLB 2m\t: %u lines, %u-ass.\n" */
+  /*          "L2_DTLB 2m\t: %u lines, %u-ass.\n", */
+  /*          (word_t) l2_tlb.d.itlb_2m.entries, */
+  /*          (word_t) l2_tlb.d.itlb_2m.assoc, */
+  /*          (word_t) l2_tlb.d.dtlb_2m.entries, */
+  /*          (word_t) l2_tlb.d.dtlb_2m.assoc); */
+  /*   } */
+
+  /*   if (l2_4k_tlb_unified){ */
+  /*   printf("L2_TLB 4k\t: %u entries, %u-ass.\n", */
+  /*          (word_t) l2_tlb.d.itlb_4k.entries, */
+  /*          (word_t) l2_tlb.d.itlb_4k.assoc); */
+  /*   } */
+  /*   else{ */
+  /*   printf("L2_ITLB 4k\t: %u entries, %u-ass.\n" */
+  /*          "L2_DTLB 4k\t: %u entries, %u-ass.\n", */
+  /*          (word_t) l2_tlb.d.itlb_4k.entries, */
+  /*          (word_t) l2_tlb.d.itlb_4k.assoc, */
+  /*          (word_t) l2_tlb.d.dtlb_4k.entries, */
+  /*          (word_t) l2_tlb.d.dtlb_4k.assoc); */
+  /*   } */
+  /*   printf("L2_CACHE\t: %u B/line, %u lines/tag, %u-ass., %u KB\n", */
+  /*      (word_t) l2_cache.d.icache.l_size, */
+  /*      (word_t) l2_cache.d.icache.l_per_tag, */
+  /*      (word_t) l2_cache.d.icache.assoc, */
+  /*      (word_t) l2_cache.d.icache.size); */
+
+  /*   printf("Addrlen\t\t: %u physical, %u virtual\n", */
+  /*      (word_t) paddr_bits, */
+  /*      (word_t) vaddr_bits); */
 }

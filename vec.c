@@ -70,6 +70,15 @@ M44 v4mmm(M44 m, M44 n) {
 
 V4 v4(float x, float y, float z, float t) { return (V4){x, y, z, t}; }
 
+
+
+bezier() {
+
+};
+
+
+
+
 void cprintv4(Console c, V4 v) {
   for (int i = 0; i < 4; i++) {
     cprintint(c, (u32)v.v[i], 16, 0),
@@ -81,4 +90,23 @@ void cprintm44(Console c, M44 m) {
   for (int i = 0; i < 16; i++) {
           cprintint(c, (u32)m.m[i], 16, 0), (((i+1)%4) ? cputc(c, ' ') : cputc(c,'\n'));
   }
+}
+
+V4 evbezier(Bezier b, float t) {
+        BezierEv f = b.bezierev;
+        return f(b.bezierdata,t);
+}
+
+V4 evcubicbezier(BezierData b, float t) {
+        V4 v = {};
+        float s[4] = {(1-t)*(1-t)*(1-t),3*(1-t)*(1-t)*t,3*(1-t)*t*t,t*t*t};
+        for (int i = 0; i<4; ++i) {
+                v = v4avv(v,v4msv(s[i],b.cp[i]));
+        }
+        return v;
+}
+
+Bezier cubicbezier(BezierData b) {
+        // assert b.nc == 4
+        return (Bezier) {evcubicbezier, b};
 }

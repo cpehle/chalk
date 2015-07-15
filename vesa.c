@@ -104,30 +104,30 @@ struct Vbemodeinfo {
 } __attribute__((packed));
 
 
-u16 vbe_read(u16 index) {
+u16 vberead(u16 index) {
     outw(VBE_DISPI_IOPORT_INDEX, index);
     return inw(VBE_DISPI_IOPORT_DATA);
 }
 
-void vbe_write(u16 index, u16 value)
+void vbewrite(u16 index, u16 value)
 {
    outw(VBE_DISPI_IOPORT_INDEX, index);
    outw(VBE_DISPI_IOPORT_DATA, value);
 }
 
 
-void vbe_set(u16 xres, u16 yres, u16 bpp)
+void vbeset(u16 xres, u16 yres, u16 bpp)
 {
-   vbe_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
-   vbe_write(VBE_DISPI_INDEX_XRES, xres);
-   vbe_write(VBE_DISPI_INDEX_YRES, yres);
-   vbe_write(VBE_DISPI_INDEX_BPP, bpp);
-   vbe_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED | VBE_DISPI_LFB_ENABLED);
+   vbewrite(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
+   vbewrite(VBE_DISPI_INDEX_XRES, xres);
+   vbewrite(VBE_DISPI_INDEX_YRES, yres);
+   vbewrite(VBE_DISPI_INDEX_BPP, bpp);
+   vbewrite(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED | VBE_DISPI_LFB_ENABLED);
 }
 
-void vbe_init() {
+void vbeinit() {
 
-    if (!(vbe_read(VBE_DISPI_INDEX_ID) == 0xB0C5)) {
+    if (!(vberead(VBE_DISPI_INDEX_ID) == 0xB0C5)) {
         return;
     };
     // 0x1234:0x1111

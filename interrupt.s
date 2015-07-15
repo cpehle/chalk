@@ -1,3 +1,8 @@
+    .globl default_exception_handler
+    .globl default_interrupt_handler
+    .globl exception_handlers
+
+
 default_exception_handler:
     jump $
 

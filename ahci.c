@@ -6,10 +6,12 @@
 #include "console.h"
 #include "mem.h"
 
-#define SATA_SIG_ATA 0x00000101   // SATA drive
-#define SATA_SIG_ATAPI 0xEB140101 // SATAPI drive
-#define SATA_SIG_SEMB 0xC33C0101  // Enclosure management bridge
-#define SATA_SIG_PM 0x96690101    // Port multiplier
+enum {
+  SATA_SIG_ATA = 0x00000101,    // SATA drive
+  SATA_SIG_ATAPI = 0xEB140101, // SATAPI drive
+  SATA_SIG_SEMB = 0xC33C0101,  // Enclosure management bridge
+  SATA_SIG_PM = 0x96690101    // Port multiplier
+};
 
 enum {
   AHCI_CMD_IOSE = (1 << 0),
@@ -17,7 +19,6 @@ enum {
   AHCI_CMD_BME = (1 << 2),
   AHCI_CMD_SCE = (1 << 3)
 };
-
 // Logic block addressing (LBA)
 enum {
   AHCI_PxCMD_ST = (1 << 0),
@@ -28,7 +29,9 @@ enum {
   AHCI_PxCMD_FR = (1 << 14),
   AHCI_PxCMD_CR = (1 << 15),
 };
-
+#define AHCI_PxCMD_ICC_SHIFT	28
+#define AHCI_PxCMD_ICC_MASK	(0xf << AHCI_PxCMD_ICC_SHIFT)
+#define AHCI_PxCMD_ICC_ACTIVE	(0x1 << AHCI_PxCMD_ICC_SHIFT)
 // Frame Information Structure types (FISType)
 typedef enum {
   FIS_TYPE_REG_H2D = 0x27,   // Register FIS - host to device
@@ -40,6 +43,10 @@ typedef enum {
   FIS_TYPE_PIO_SETUP = 0x5F, // PIO setup FIS - device to host
   FIS_TYPE_DEV_BITS = 0xA1,  // Set device bits FIS - device to host
 } FISType;
+
+#define FIS_H2D_CMD	(1 << 7)
+#define FIS_H2D_FIS_LEN	20
+#define FIS_H2D_DEV_LBA	(1 << 6)
 
 // The host issues commands to the device through a command list,
 // it has up to 32 slots, each of which can hold a command header.
@@ -116,7 +123,8 @@ typedef volatile struct {
   u32 command_issue;
   u32 sata_notify;
   u32 fis_based_switch;
-  u32 _reserved1[15];
+  u32 _reserved1[11];
+  u32 _vendor[4];
 } __attribute__((packed)) AhciPort;
 // Host Bus Adapter Control
 // See section 3.1
@@ -136,6 +144,20 @@ typedef struct {
   u32 _vendor[24];
   AhciPort ports[32];
 } AhciControl;
+
+typedef volatile struct {
+    u8 dma_setup_fis[28];
+    u8 _reserved0[4];
+    u8 pio_setup_fis[20];
+    u8 _reserved1[12];
+    u8 d2h_register_fis[20];
+    u8 _reserved2[4];
+    u8 set_device_bits_fis[8];
+    u8 unknown_fis[64];
+    u8 _reserved3[96];
+} ReceivedFis;
+
+
 typedef volatile struct {
   u16 cmd;
   u16 prdt_length;
@@ -162,13 +184,14 @@ typedef volatile struct {
   } prdt[];
 } AhciCommandTable;
 typedef struct {
-  AhciControl *ctrl;
+  AhciControl *control;
   AhciPort *port;
-  AhciCommand *cmdlist;
-  AhciCommandTable *cmdtable;
-  u8 *buf, *user_buf;
-  int write_back;
-  u64 buflen;
+  AhciCommand *commandlist;
+  AhciCommandTable *commandtable;
+  ReceivedFis *receivedfis;
+  u8 *buf, *userbuffer;
+  int writeback;
+  u64 bufferlength;
 } AhciDev;
 typedef struct FisData {
   u8 fis_type;             // FIS_TYPE_DATA
@@ -226,6 +249,19 @@ typedef struct FisDMASetup {
   u32 TransferCount; // Number of bytes to transfer. Bit 0 must be 0
   u32 reserved2;
 } __attribute__((packed)) FISDMASetup;
+
+
+static inline u32 _ahciclearstatus(volatile u32 *const reg)
+{
+    const u32 bits = *reg;
+    if (bits)
+        *reg = bits;
+    return bits;
+}
+#define ahciclearstatus(p, r) _ahciclearstatus(&(p)->r)
+
+
+
 
 // ahci read and write
 void ahciwrite(AhciPort const *port) {
@@ -306,13 +342,59 @@ static inline int ahciportisactive(const AhciPort *const port) {
 
 void ahciinitializedevice() {}
 
-void ahciidentify() {
-  FISRegH2D fis = {};
-  fis.fis_type = FIS_TYPE_REG_H2D;
-  //fis.command = ATA_CMD_IDENTIFY;
-  fis.device = 0;
-  fis.control = 1;
+void ahciidentify(AhciDev *const dev) {
+  dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
+
 }
+
+
+void ahcistartcommandengine(volatile AhciPort * port) {
+
+}
+
+void ahcistopcommandengine(volatile AhciPort * port) {
+
+}
+
+void ahciportrebase(volatile AhciPort * port) {
+
+}
+
+
+
+/* void ahciatareadsectors(AhciDev *const dev, const Lba start, u64 count, u8 *const buffer) { */
+
+/*   switch (atadev->readcommand) { */
+/*   case ATA_READ_DMA: { */
+
+/*     break; */
+/*   } */
+/*   case ATA_READ_DMA_EXT: { */
+
+/*     break; */
+/*   } */
+/*   default: */
+/*     break; */
+/*   } */
+
+/*   dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D; */
+/*   dev->commandtable->fis_raw[1] = FIS_H2D_CMD; */
+/*   dev->commandtable->fis_raw[2] = atadev->readcommand; */
+/*   dev->commandtable->fis_raw[4] = (start >>  0) & 0xff; */
+/*   dev->commandtable->fis_raw[5] = (start >>  8) & 0xff; */
+/*   dev->commandtable->fis_raw[6] = (start >> 16) & 0xff; */
+/*   dev->commandtable->fis_raw[7] = FIS_H2D_DEV_LBA; */
+/*   //if (atadev->readcommand == ATA_READ_DMA_EXT) { */
+/*     dev->commandtable->fis_raw[ 9] = (start >> 32) & 0xff; */
+/*     dev->commandtable->fis_raw[10] = (start >> 40) & 0xff; */
+/*     //} */
+/*     //dev->commandtable->fis_raw[12] = (sectors >>  0) & 0xff; */
+/*     //dev->commandtable->fis_raw[13] = (sectors >>  8) & 0xff; */
+
+/*   ahcicommandslotexecute(); */
+
+/* } */
+
 
 u32 ahcichecktype(volatile AhciPort *port) {
   u32 s = port->sata_status;
@@ -325,11 +407,65 @@ u32 ahcichecktype(volatile AhciPort *port) {
   return port->signature;
 }
 
-void ahciprobeport(Arena *m, AhciControl *const ctrl, AhciPort *port,
-                   const int portnum) {
-  port = arenapushstruct(m, AhciPort);
+
+void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *port,
+                     const int portnum) {
+  const int ncs = AHCI_NCS(control->capabilties);
+  AhciCommand *const commandlist = arenapusharray(m, ncs, AhciCommand);
+  AhciCommandTable *const commandtable = arenapushstruct(m, AhciCommandTable);
+  ReceivedFis *const receivedfis = arenapushstruct(m, ReceivedFis);
+  AhciDev *const dev = arenapushstruct(m, AhciDev);
+
+  port->commandlist_base_addr = commandlist;
+  port->frameinfo_base_addr = receivedfis;
+
+  port->command_status |= AHCI_PxCMD_ICC_ACTIVE;
+
+  dev->control = control;
+  dev->port = port;
+  dev->commandlist = commandlist;
+  dev->commandtable = commandtable;
+  dev->receivedfis = receivedfis;
+
+  switch (ahcichecktype(port)) {
+  case SATA_SIG_ATA: {
+    cprint(c, "ahci: found ata device on port "), cprintint(c, portnum, 16, 0),
+        cputc(c, '\n');
+    //dev->atadevice.identify = ahciidentifydevice;
+    //dev->atadevice.readsectors = ahciatareadsectors;
+    //return ataattachdevice(&dev->atadevice, PORT_TYPE_SATA);
+    break;
+  }
+  case SATA_SIG_ATAPI: {
+    break;
+  }
+  case SATA_SIG_SEMB: {
+    break;
+  }
+  case SATA_SIG_PM: {
+    break;
+  }
+  default: { break; }
+  };
 }
 
+void ahciprobeport(Arena *m, Console c, AhciControl *const ctrl, AhciPort *port,
+                   const int portnum) {
+  if (ctrl->capabilties & AHCI_CAP_SSS) {
+    port->command_status |= AHCI_PxCMD_SUD;
+  }
+  if ((ctrl->capabilties & AHCI_CAP_SSS) || !(ctrl->ports_implemented & ((1 << (portnum - 1)) - 1))) {
+    for (int i = 0; i<10; ++i) { cputc(c,'.');}
+  }
+
+  ahciclearstatus(port, sata_error);
+  ahciclearstatus(port, interrupt_status);
+
+
+  ahcideviceinit(m, c, ctrl, port, portnum);
+}
+
+// ahcipciinit -- Initialize a SATA controller and the devices attached to it.
 void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   PciConf conf = pciconfread(bus, slot);
   if (conf.class_code != 0x01 ||
@@ -339,7 +475,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   }
   cprint(c, "ahci: Found SATA controller.\n");
   AhciControl *const ctrl =
-      (AhciControl *)(conf.dev.base_address_register[5].u.address);
+      (AhciControl *)(conf.dev.base_address_register[5].address);
   u32 size = conf.dev.base_address_register[5].size;
   AhciPort *const ports = ctrl->ports;
   // reset host controller
@@ -354,7 +490,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
     cprint(c, "ahci: Error, controller did not reset.");
     return;
   }
-  ctrl->global_host_control |= AHCI_GHC_AHCI_ENABLE; // set ahci access
+  ctrl->global_host_control |= AHCI_GHC_AHCI_ENABLE;
 
   const int ncs = AHCI_NCS(ctrl->capabilties);
   AhciCommand *const cmdarr = arenapusharray(m, ncs, AhciCommand);
@@ -384,7 +520,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   }
   for (int i = 0; i < 32; ++i) {
     if (ctrl->ports_implemented & (1 << i)) {
-      ahciprobeport(m, ctrl, &ports[i], i);
+      ahciprobeport(m, c, ctrl, &ports[i], i+1);
     }
   }
 }

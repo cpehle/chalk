@@ -7,8 +7,8 @@
 #include "e1000.h"
 
 enum {
-  Rctrl = 0x0000,
-  Reerd = 0x0014,
+  Rctrl = 0x0000, // device control
+  Reerd = 0x0014, // eeprom read
   Rrctl = 0x0100, // receive control
   Rtctl = 0x0400, // transmit control
   Rrdbal = 0x2800, // receive descriptor base low
@@ -93,13 +93,31 @@ typedef struct TransDesc {
   volatile u16 special;
 } __attribute__((packed)) TransDesc;
 
+
+
+
+
+static void e1000poll() {
+
+}
+
+
+static void e1000send() {
+  TransDesc *t;
+  while(!(t->status & 0xf)) {
+    // wait
+  }
+
+}
+
+
 void e1000init(Arena *a, PciConf *c, Console cons) {
   if ((c->vendor_id != 0x8086) ||
       !(c->device_id == 0x100e || c->device_id == 0x1503)) {
     return;
   }
   PciDevConf d = c->dev;
-  volatile u32* mmio = d.base_address_register[0].u.address;
+  volatile u32* mmio = d.base_address_register[0].address;
   cprintint(cons, (u32)mmio, 16, 0);
 
   u32 ral = mmio[Rral/4];
@@ -113,7 +131,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
     mac[2] = (u8)(ral >> 16);
     mac[3] = (u8)(ral >> 24);
     mac[4] = (u8)(rah);
-    mac[5] = (u8)(ral >> 8);
+    mac[5] = (u8)(rah >> 8);
   } else { // read MAC address from EEPROM instead
     return;
   }
@@ -122,11 +140,13 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
     cprintint(cons, mac[i], 16, 0),
         (i == 5) ? cputc(cons, '\n') : cputc(cons, ':');
   }
-  return;
+  // return;
 
   mmio[Rctrl / 4] |= CtrlSLU;        // set link up
   mset(mmio + Rmta / 4, 0, 4 * 128); // clear multicast table
                                      // TODO: clear all interrupts
+  // mmio[Rims/4] = 0x1F6DC; // enable all interrupts
+
   RecvDesc *rx = arenapusharray(a, Nrx, RecvDesc);
   for (int i = 0; i < Nrx; ++i) {
     rx[i].addr = (u64)arenapusharray(a, 2048, u8);
@@ -145,7 +165,6 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   for (int i = 0; i<Ntx; ++i) {
           tx[i].status = (1<<0);
   }
-
   mmio[Rtdbal / 4] = (u64)tx;
   mmio[Rtdbah / 4] = (u64)tx >> 32;
   mmio[Rtdlen / 4] = Ntx * sizeof(TransDesc);
@@ -153,5 +172,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   mmio[Rtdt / 4] = 0;
   mmio[Rtctl / 4] = Tctl_EN | Tctl_PSP | (15 < Tctl_CT_SHIFT) | (64 << Tctl_COLD_SHIFT) | Tctl_RTLC;
 
+
+  return;
   // need to setup the transmission and receive ringbuffers
 }

@@ -12,7 +12,7 @@
 #include "e1000.h"
 #include "vesa.h"
 #include "vec.h"
-
+#include "graphics.h"
 #define X86_MSR_EFER                		0xC0000080
 
 #define X86_MSR_EFER_LMA			(1 << 10)
@@ -132,7 +132,7 @@ void enablelongmode() {
   wrmsr(0xc0000080, efer);
 }
 
-u32 get_active_pagetable(void) {
+u32 getactivepagetable(void) {
    u32 pgm;
     __asm__ __volatile__ ("mov %%cr3, %0\n" :"=a" (pgm));
     return pgm;
@@ -199,7 +199,7 @@ int main() {
       cputc(c, ehdr->e_ident[i]);
     }
     if (!(ehdr->e_machine == 0x3E)) {
-      cprint(c, "Expected x86_64-ELF.\n");
+      cprint(c, "\nExpected x86_64-ELF.\n");
     }
     cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
     cprint(c, "\nNumber of entries in program section "),
@@ -238,47 +238,62 @@ int main() {
   // need to find ahci in order to load kernel from disk.
   // Investigate what GDT entries we really need!
   // We now need to figure out where the 64bit code is and jump to it.
+
+  // Dummy gdt
   GDTEntry entries[3] = {{0, 0},                    // Null descriptor
                          {0x00000000, 0xffffffff},  // Code, R/X, Nonconforming
                          {0x00000000, 0xffffffff}}; // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
+
+
+  // this is just a test pci traversal
   pciscan(c);
   {
     PciConf eth = pciconfread(0, 3);
     e1000init(0, &eth, c);
   }
+  //for(;;) {}
+
   // Random arena code.
   // Need to write proper tests!
-  {
-    Arena *a;
-    arenainit(a, 4000000, (void *)0x1000000);
-    int *x = arenapusharray(a, 1000, int);
-    int *y = arenapusharray(a, 1000, int);
-    for (int i = 0; i < 1000; ++i) {
-      x[i] = y[i] = 1;
-    }
-    for (int i = 0; i < 1000; ++i) {
-      x[i] += y[i];
-    }
-    cprintint(c, x[400], 16, 0), cputc(c, '\n');
+  Arena *a;
+  arenainit(a, 4000000, (void *)0x1000000);
+  int *x = arenapusharray(a, 1000, int);
+  int *y = arenapusharray(a, 1000, int);
+  for (int i = 0; i < 1000; ++i) {
+    x[i] = y[i] = 1;
   }
+  for (int i = 0; i < 1000; ++i) {
+    x[i] += y[i];
+  }
+  cprintint(c, x[400], 16, 0), cputc(c, '\n');
+
   ahcipciinit(0, c, 0, 4);
-  // cclear(c, White);
+  for(;;) {}
+
+  // detect cpu features, eventually we want to enable features we find as we go along
   cpudetect(c);
+//  for (;;) {}
 
-  V4 v = {1,0,0,0};
-  V4 w = {0,1,0,0};
-  V4 u = v4avv(v,w);
-  cprintv4(c, u);
-  cprintv4(c, v4msv(2, u));
-  cprintv4(c, v4mmv(m44i(), u));
-  cprintm44(c, m44i());
-  cprintm44(c, v4msm(2, m44i()));
-  cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
-  for (;;);
+  // random vector code, need to write proper tests.
+  {
+    M44 m = (M44){1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+    V4 v = {1, 0, 0, 0};
+    V4 w = {0, 1, 0, 0};
+    V4 u = v4avv(v, w);
+    cprintv4(c, u);
+    cprintv4(c, v4msv(2, u));
+    cprintv4(c, v4mmv(m44i(), u));
+    cprintm44(c, m44i());
+    cprintm44(c, v4msm(2, m44i()));
+    cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
+    cprintm44(c, v4mmm(m, m));
+  }
 
+
+  //for(;;){}
 
   {
     u32 *framebufferaddr;
@@ -288,14 +303,40 @@ int main() {
       framebufferaddr = (u32 *)vesa.dev.base_address_register[0].address;
     }
 
-    vbe_set(1600, 1200, 32);
+    vbeset(1920, 1200, 32);
     int offset = 0;
-    for (int i = 0; i < 1600; ++i) {
-      offset = (50 * 1600 + i);
+    for (int i = 0; i < 1920; ++i) {
+      for (int j = 0; j<1200; ++j) {
+      offset = (j * 1920 + i);
+      // Format is 0x00rrggbb, can use first byte for alpha blending
+      framebufferaddr[offset] = 0x00eeeeee;
+      }
+    }
+
+    for (int i = 0; i < 1920; ++i) {
+      offset = (50 * 1920 + i);
       // Format is 0x00rrggbb, can use first byte for alpha blending
       framebufferaddr[offset] = 0x00ff0000;
     }
+    float t = 0;
+    BezierData b = {4,{{50,68,0,0},{70,220,0,0},{80,40,0,0},{90,100,0,0}}};
+
+    while (t < 1) {
+      V4 v = evcubicbezier(b, t);
+      int offset = (u32)(v.v[1]) * 1920 + (u32)(v.v[0]);
+      framebufferaddr[offset] = 0x000000ff;
+      t += 0.00001;
+    }
+
+    u32* buf = renderglyphs(a);
+    copyrect(framebufferaddr, buf, 0, 20, 98);
+    rendertext(framebufferaddr, buf, "Hello World.", 0, 50);
+    rendertext(framebufferaddr, buf, "Hello World.", 0, 66);
+    rendertext(framebufferaddr, buf, "Hello World.", 8*20, 82);
+    rendertext(framebufferaddr, buf, "12 23 45 332", 8*20, 60*16);
+
   }
-  for(;;);
+  for (;;) {}
+
   return 0;
 }

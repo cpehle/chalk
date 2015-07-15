@@ -12,7 +12,7 @@ QEMUFLAGS:=-enable-kvm -serial mon:stdio -smp 2 -m 512 -drive file=disk.img,if=n
 QEMU:=qemu-system-x86_64
 
 OBJS := main.o start64.o
-OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o
+OBJS32 := load.o start.o mem32.o kernel_image.o console.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o
 
 default: kernel.bin
 	mkdir -p isodir
@@ -54,6 +54,10 @@ detect.o: detect.c detect.h u.h dat.h console.h
 	$(CC32) $(CFLAGS32) -c detect.c -o detect.o
 vec.o: vec.c vec.h
 	$(CC32) $(CFLAGS32) -c vec.c -o vec.o
+graphics.o: graphics.c graphics.h
+	$(CC32) $(CFLAGS32) -c graphics.c -o graphics.o
+font8x16.o: font8x16.o font8x16.h
+	$(CC32) $(CFLAGS32) -c font8x16.c -o font8x16.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

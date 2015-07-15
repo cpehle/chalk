@@ -46,7 +46,7 @@ static inline void idtsetentry(u8 index, u64 base, u16 selector, u16 type) {
 
 void idtsethandler(u8 index, InterruptType type, void(*handler)) {
   if (handler) {
-    u16 selector = 0x8;
+    u16 selector = 0x8; // code segment
     idtsetentry(index, (u64)handler, selector, type);
   } else {
     idtsetentry(index, 0, 0, 0);
