@@ -366,7 +366,7 @@ void ahcireset(AhciControl *const ctrl) {
 
 
 
-void ahciinitializedevice() {}
+
 
 int ahciidentifydevice(AhciDev *const dev, u8 *const buf) {
   ahcicommandslotprepare(dev, buf, 512, 0);
