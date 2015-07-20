@@ -12,6 +12,9 @@ typedef struct TemporaryMemory TemporaryMemory;
 // TODO:
 // Alignment!
 // Clear!
+#define arenapushstructalign(Arena, type, alignment) (type *)arenapushsize_(Arena, sizeof(type), 16)
+#define arenapusharrayalign(Arena, Count, type, alignment) (type *)arenapushsize_(Arena, (Count)*sizeof(type), alignment)
+
 #define arenapushstruct(Arena, type) (type *)arenapushsize_(Arena, sizeof(type), 16)
 #define arenapusharray(Arena, Count, type) (type *)arenapushsize_(Arena, (Count)*sizeof(type), 16)
 #define arenapushsize(Arena, size, alignment) arenapushsize_(Arena, size, alignment)

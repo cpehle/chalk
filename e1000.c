@@ -104,10 +104,11 @@ static void e1000poll() {
 
 static void e1000send() {
   TransDesc *t;
+  u8* mmio;
   while(!(t->status & 0xf)) {
     // wait
   }
-
+  // mmio[Rtdt/4] = (txwrite + 1) & (txdesccount - 1);
 }
 
 
@@ -122,6 +123,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
 
   u32 ral = mmio[Rral/4];
   u8 mac[6] = {};
+  // TODO: Should determine number of receive and transmission registers.
   const int Ntx = 32, Nrx = 8;
 
   if (ral) {
@@ -145,6 +147,9 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   mmio[Rctrl / 4] |= CtrlSLU;        // set link up
   mset(mmio + Rmta / 4, 0, 4 * 128); // clear multicast table
                                      // TODO: clear all interrupts
+  volatile u32 _dummy = mmio[Ricr/4];
+  cprintint(cons, _dummy, 16, 0);
+
   // mmio[Rims/4] = 0x1F6DC; // enable all interrupts
 
   RecvDesc *rx = arenapusharray(a, Nrx, RecvDesc);
@@ -163,7 +168,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   TransDesc *tx = arenapusharray(a, Ntx, TransDesc);
   mset(tx,0,Ntx*sizeof(TransDesc));
   for (int i = 0; i<Ntx; ++i) {
-          tx[i].status = (1<<0);
+    tx[i].status = (1<<0); // mark descriptor complete
   }
   mmio[Rtdbal / 4] = (u64)tx;
   mmio[Rtdbah / 4] = (u64)tx >> 32;

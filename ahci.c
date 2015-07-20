@@ -6,13 +6,28 @@
 #include "console.h"
 #include "mem.h"
 
+/*
+
+  HBA State machine (c.f 5.1)
+  ---------------------------
+
+  * Idle states
+
+  ** H:Init
+  Entered by setting GHC.HR == 1
+  post condition GHC.HR == 0
+
+  HBA Port state machine (c.f. 5.2)
+  ---------------------------------
+
+*/
+
 enum {
   SATA_SIG_ATA = 0x00000101,    // SATA drive
   SATA_SIG_ATAPI = 0xEB140101, // SATAPI drive
   SATA_SIG_SEMB = 0xC33C0101,  // Enclosure management bridge
   SATA_SIG_PM = 0x96690101    // Port multiplier
 };
-
 enum {
   AHCI_CMD_IOSE = (1 << 0),
   AHCI_CMD_MSE = (1 << 1),
@@ -32,6 +47,15 @@ enum {
 #define AHCI_PxCMD_ICC_SHIFT	28
 #define AHCI_PxCMD_ICC_MASK	(0xf << AHCI_PxCMD_ICC_SHIFT)
 #define AHCI_PxCMD_ICC_ACTIVE	(0x1 << AHCI_PxCMD_ICC_SHIFT)
+
+#define AHCI_PxSSTS_IPM_SHIFT		8
+#define AHCI_PxSSTS_IPM_MASK		(0xf << AHCI_PxSSTS_IPM_SHIFT)
+#define AHCI_PxSSTS_IPM_ACTIVE		(1 << AHCI_PxSSTS_IPM_SHIFT)
+#define AHCI_PxSSTS_DET_SHIFT		0
+#define AHCI_PxSSTS_DET_MASK		(0xf << AHCI_PxSSTS_DET_SHIFT)
+#define AHCI_PxSSTS_DET_ESTABLISHED	(3 << AHCI_PxSSTS_DET_SHIFT)
+
+
 // Frame Information Structure types (FISType)
 typedef enum {
   FIS_TYPE_REG_H2D = 0x27,   // Register FIS - host to device
@@ -59,7 +83,6 @@ typedef enum {
   AHCI_CMD_LIST_FLAG_R = (1 << 8), // Reset
   AHCI_CMD_LIST_FLAG_B = (1 << 9), // BIST
 } AhciCommandListFlag;
-
 // section 3.1.1
 enum {
   AHCI_CAP_SXS = (1 << 5),   // Supports external SATA
@@ -70,6 +93,7 @@ enum {
   AHCI_CAP_PMD = (1 << 15),  // multiple-block pio
   AHCI_CAP_FBSS = (1 << 16), // Fis based switching support
   AHCI_CAP_SPM = (1 << 17),  // supports port multiplier
+  AHCI_CAP_SAM = (1 << 18),  // supports only AHCI mode
   AHCI_CAP_SSS = (1 << 27),  // supports staggered spinup
   AHCI_CAP_S64A = (1 << 31), // supports 64bit addressing
 };
@@ -157,7 +181,6 @@ typedef volatile struct {
     u8 _reserved3[96];
 } ReceivedFis;
 
-
 typedef volatile struct {
   u16 cmd;
   u16 prdt_length;
@@ -173,6 +196,7 @@ typedef struct AhciCommandHeader {
   u64 command_table_base_addr; // Command table descriptor base address
   u32 reserved_1[4];           // Reserved
 } __attribute__((packed)) AhciCommandHeader;
+
 typedef volatile struct {
   u8 fis_raw[64];
   u8 atapi_cmd[16];
@@ -183,6 +207,7 @@ typedef volatile struct {
     u32 flags;
   } prdt[];
 } AhciCommandTable;
+
 typedef struct {
   AhciControl *control;
   AhciPort *port;
@@ -192,13 +217,17 @@ typedef struct {
   u8 *buf, *userbuffer;
   int writeback;
   u64 bufferlength;
+  int identify;
+  int readsectors;
 } AhciDev;
+
 typedef struct FisData {
   u8 fis_type;             // FIS_TYPE_DATA
   u8 port_multiplier_port; // actually only the first 4 bits.
   u8 reserver0[2];
   u32 data[1]; // Payload
 } __attribute__((packed)) FISData;
+
 typedef struct FISRegD2H {
   u8 fis_type; // FIS_TYPE_REG_D2H
   u8 port_multiplier_interrupt;
@@ -208,6 +237,7 @@ typedef struct FISRegD2H {
   u16 count;
   u8 reserved[6];
 } __attribute__((packed)) FISRegD2H;
+
 typedef struct FISRegH2D {
   u8 fis_type; // FIS_TYPE_REG_H2D
   u8 flags;
@@ -226,6 +256,7 @@ typedef struct FISRegH2D {
   u8 control; // Control register
   u8 rsv1[4]; // Reserved
 } __attribute__((packed)) FISRegH2D;
+
 typedef struct FISPioSetup {
   u8 fis_type; // FIS_TYPE_PIO_SETUP
   u32 flags;
@@ -238,6 +269,7 @@ typedef struct FISPioSetup {
   u16 tc;      // Transfer count
   u8 rsv4[2];  // Reserved
 } __attribute__((packed)) FISPioSetup;
+
 typedef struct FisDMASetup {
   u8 fis_type; // FIS_TYPE_DMA_SETUP
   u16 flags;
@@ -250,7 +282,6 @@ typedef struct FisDMASetup {
   u32 reserved2;
 } __attribute__((packed)) FISDMASetup;
 
-
 static inline u32 _ahciclearstatus(volatile u32 *const reg)
 {
     const u32 bits = *reg;
@@ -259,9 +290,6 @@ static inline u32 _ahciclearstatus(volatile u32 *const reg)
     return bits;
 }
 #define ahciclearstatus(p, r) _ahciclearstatus(&(p)->r)
-
-
-
 
 // ahci read and write
 void ahciwrite(AhciPort const *port) {
@@ -336,24 +364,48 @@ void ahcireset(AhciControl *const ctrl) {
   }
 }
 
-static inline int ahciportisactive(const AhciPort *const port) {
-  return (port->sata_status & ((0xf << 8) | 0xf)) == ((1 << 8) | (3 << 0));
-}
+
 
 void ahciinitializedevice() {}
 
-void ahciidentify(AhciDev *const dev) {
+int ahciidentifydevice(AhciDev *const dev, u8 *const buf) {
+  ahcicommandslotprepare(dev, buf, 512, 0);
   dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
-
+  dev->commandtable->fis_raw[1] = FIS_H2D_CMD;
+  dev->commandtable->fis_raw[2] = 0x012; // identify command
+  if ((ahcicommandslotexecute(dev) < 0) || (dev->commandlist->prd_bytes != 512)) {
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
 
-void ahcistartcommandengine(volatile AhciPort * port) {
-
+int ahcistartcommandengine(Console c, volatile AhciPort * port) {
+  int timeout = 1000;
+  while ((port->command_status & AHCI_PxCMD_CR) && timeout--) {
+  }
+  if (timeout < 0) {
+    cprint(c, "ahci: command engine did not start.\n");
+    return 1;
+  }
+  port->command_status |= AHCI_PxCMD_FRE;
+  port->command_status |= AHCI_PxCMD_ST;
+  return 0;
 }
 
-void ahcistopcommandengine(volatile AhciPort * port) {
+int ahcistopcommandengine(Console c, volatile AhciPort * port) {
+  port->command_status &= ~AHCI_PxCMD_ST;
+  int timeout = 1000;
+  while ((port->command_status & (AHCI_PxCMD_FR | AHCI_PxCMD_CR)) && timeout--) {
+  }
+  if (timeout < 0) {
+    cprint(c, "ahci: command engine did not stop.\n");
+    return 1;
+  }
 
+  port->command_status &= ~AHCI_PxCMD_FRE;
+  return 0;
 }
 
 void ahciportrebase(volatile AhciPort * port) {
@@ -362,38 +414,38 @@ void ahciportrebase(volatile AhciPort * port) {
 
 
 
-/* void ahciatareadsectors(AhciDev *const dev, const Lba start, u64 count, u8 *const buffer) { */
+void ahciatareadsectors(AhciDev *const dev, const Lba start, u64 count, u8 *const buffer) {
 
-/*   switch (atadev->readcommand) { */
-/*   case ATA_READ_DMA: { */
+  switch (dev->readcommand) {
+  case ATA_READ_DMA: {
 
-/*     break; */
-/*   } */
-/*   case ATA_READ_DMA_EXT: { */
+    break;
+  }
+  case ATA_READ_DMA_EXT: {
 
-/*     break; */
-/*   } */
-/*   default: */
-/*     break; */
-/*   } */
+    break;
+  }
+  default:
+    break;
+  }
 
-/*   dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D; */
-/*   dev->commandtable->fis_raw[1] = FIS_H2D_CMD; */
-/*   dev->commandtable->fis_raw[2] = atadev->readcommand; */
-/*   dev->commandtable->fis_raw[4] = (start >>  0) & 0xff; */
-/*   dev->commandtable->fis_raw[5] = (start >>  8) & 0xff; */
-/*   dev->commandtable->fis_raw[6] = (start >> 16) & 0xff; */
-/*   dev->commandtable->fis_raw[7] = FIS_H2D_DEV_LBA; */
-/*   //if (atadev->readcommand == ATA_READ_DMA_EXT) { */
-/*     dev->commandtable->fis_raw[ 9] = (start >> 32) & 0xff; */
-/*     dev->commandtable->fis_raw[10] = (start >> 40) & 0xff; */
-/*     //} */
-/*     //dev->commandtable->fis_raw[12] = (sectors >>  0) & 0xff; */
-/*     //dev->commandtable->fis_raw[13] = (sectors >>  8) & 0xff; */
+  dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
+  dev->commandtable->fis_raw[1] = FIS_H2D_CMD;
+  dev->commandtable->fis_raw[2] = atadev->readcommand;
+  dev->commandtable->fis_raw[4] = (start >>  0) & 0xff;
+  dev->commandtable->fis_raw[5] = (start >>  8) & 0xff;
+  dev->commandtable->fis_raw[6] = (start >> 16) & 0xff;
+  dev->commandtable->fis_raw[7] = FIS_H2D_DEV_LBA;
+  //if (atadev->readcommand == ATA_READ_DMA_EXT) {
+    dev->commandtable->fis_raw[ 9] = (start >> 32) & 0xff;
+    dev->commandtable->fis_raw[10] = (start >> 40) & 0xff;
+    //}
+    //dev->commandtable->fis_raw[12] = (sectors >>  0) & 0xff;
+    //dev->commandtable->fis_raw[13] = (sectors >>  8) & 0xff;
 
-/*   ahcicommandslotexecute(); */
+  ahcicommandslotexecute();
 
-/* } */
+}
 
 
 u32 ahcichecktype(volatile AhciPort *port) {
@@ -411,14 +463,22 @@ u32 ahcichecktype(volatile AhciPort *port) {
 void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *port,
                      const int portnum) {
   const int ncs = AHCI_NCS(control->capabilties);
-  AhciCommand *const commandlist = arenapusharray(m, ncs, AhciCommand);
-  AhciCommandTable *const commandtable = arenapushstruct(m, AhciCommandTable);
-  ReceivedFis *const receivedfis = arenapushstruct(m, ReceivedFis);
+  // need to be alligned to 1024
+  AhciCommand *const commandlist = arenapusharrayalign(m, ncs, AhciCommand, 1024);
+  AhciCommandTable *const commandtable = arenapushstructalign(m, AhciCommandTable, 128);
+  ReceivedFis *const receivedfis = arenapushstructalign(m, ReceivedFis, 256);
   AhciDev *const dev = arenapushstruct(m, AhciDev);
 
+  if (!ahcistopcommandengine(c, port)) {
+         // cleanup
+  };
   port->commandlist_base_addr = commandlist;
   port->frameinfo_base_addr = receivedfis;
+  if (!ahcistartcommandengine(c, port)) {
+      // cleanup
+  };
 
+  // put port into active state
   port->command_status |= AHCI_PxCMD_ICC_ACTIVE;
 
   dev->control = control;
@@ -427,12 +487,16 @@ void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *p
   dev->commandtable = commandtable;
   dev->receivedfis = receivedfis;
 
+  // int timeout = 20000;
+  // while ((port->taskfile_data & AHCI_PxTFD_BSY) && timeout--) {
+  //}
+
   switch (ahcichecktype(port)) {
   case SATA_SIG_ATA: {
     cprint(c, "ahci: found ata device on port "), cprintint(c, portnum, 16, 0),
         cputc(c, '\n');
-    //dev->atadevice.identify = ahciidentifydevice;
-    //dev->atadevice.readsectors = ahciatareadsectors;
+    dev->identify = ahciidentifydevice;
+    dev->readsectors = ahciatareadsectors;
     //return ataattachdevice(&dev->atadevice, PORT_TYPE_SATA);
     break;
   }
@@ -449,18 +513,30 @@ void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *p
   };
 }
 
+static inline int ahciportisactive(const AhciPort *const port)
+{
+    return (port->sata_status & (AHCI_PxSSTS_IPM_MASK | AHCI_PxSSTS_DET_MASK))
+        == (AHCI_PxSSTS_IPM_ACTIVE | AHCI_PxSSTS_DET_ESTABLISHED);
+}
+
+// ahciprobeport -- initializes a single port
 void ahciprobeport(Arena *m, Console c, AhciControl *const ctrl, AhciPort *port,
                    const int portnum) {
+  // devices that support stagerred spinup, need to be spun up.
   if (ctrl->capabilties & AHCI_CAP_SSS) {
     port->command_status |= AHCI_PxCMD_SUD;
   }
   if ((ctrl->capabilties & AHCI_CAP_SSS) || !(ctrl->ports_implemented & ((1 << (portnum - 1)) - 1))) {
     for (int i = 0; i<10; ++i) { cputc(c,'.');}
   }
+  if (!ahciportisactive(port)) {
+    // cprint(c, "port failed to activate");
+    return;
+  }
+  cputc(c, '\n');
 
   ahciclearstatus(port, sata_error);
   ahciclearstatus(port, interrupt_status);
-
 
   ahcideviceinit(m, c, ctrl, port, portnum);
 }
@@ -473,24 +549,43 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
                                // subclass id 0x06 (serial ATA).
     return;
   }
-  cprint(c, "ahci: Found SATA controller.\n");
+  cprint(c, "ahci: Found SATA controller ");
+  {
+    const int dat[] = {bus, slot, conf.vendor_id, conf.device_id};
+    for (int i = 0; i<4; ++i) {
+      cprintint(c, dat[i], 16, 0);
+      (i < 3) ? cputc(c, ' ') : cputc(c, '\n');
+    }
+  }
+
   AhciControl *const ctrl =
       (AhciControl *)(conf.dev.base_address_register[5].address);
   u32 size = conf.dev.base_address_register[5].size;
   AhciPort *const ports = ctrl->ports;
-  // reset host controller
+
+  // See HBA State machine above
+  // Reset host controller
   // delay for up to one second, if we had a coorporative scheduler we would
   // yield here for one second (max). Instead we print some dots.
   ctrl->global_host_control |= AHCI_GHC_HOST_RESET;
+  // delay for some time, if we had a scheduler at this point we would be able to yield for one second.
   for (int i = 0; i < 10; ++i) {
     cputc(c, '.');
   }
   cputc(c, '\n');
   if (ctrl->global_host_control & AHCI_GHC_HOST_RESET) {
-    cprint(c, "ahci: Error, controller did not reset.");
+    cprint(c, "ahci: Error, controller did not reset.\n");
     return;
   }
-  ctrl->global_host_control |= AHCI_GHC_AHCI_ENABLE;
+
+  if (ctrl->capabilties & AHCI_CAP_SAM) { // CAP.SAM == 0
+    ctrl->global_host_control |= AHCI_GHC_AHCI_ENABLE;
+  }
+
+ if (ctrl->capabilties & AHCI_CAP_CCCS) { // Command coalescing
+   ctrl->command_completion_coalescing_control |= 0x1;
+   // TODO: Command coalescing features.
+  }
 
   const int ncs = AHCI_NCS(ctrl->capabilties);
   AhciCommand *const cmdarr = arenapusharray(m, ncs, AhciCommand);
@@ -499,8 +594,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   {
     const char *speed_in_gbps;
     u32 speed, slots, ports;
-    cprint(c, "registers at: "), cprintint(c, (u32)ctrl, 16, 0),
-        cprint(c, " size: "), cprintint(c, size, 16, 0);
+    cprint(c, "registers at: "), cprintint(c, (u32)ctrl, 16, 0), cprint(c, " size: "), cprintint(c, size, 16, 0);
     cputc(c, '\n');
     speed = (ctrl->capabilties >> 20) & 0xf;
     if (speed == 1) {
@@ -518,6 +612,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
     cprintint(c, slots, 16, 0), cprint(c, ", "), cprintint(c, ports, 16, 0),
         cprint(c, ", "), cprint(c, speed_in_gbps), cputc(c, '\n');
   }
+  // Probe for devices attached to the controller.
   for (int i = 0; i < 32; ++i) {
     if (ctrl->ports_implemented & (1 << i)) {
       ahciprobeport(m, c, ctrl, &ports[i], i+1);

@@ -13,15 +13,14 @@
 #include "vesa.h"
 #include "vec.h"
 #include "graphics.h"
-#define X86_MSR_EFER                		0xC0000080
 
+#define X86_MSR_EFER                0xC0000080
 #define X86_MSR_EFER_LMA			(1 << 10)
 
 #define X86_CR0_PE	(1 <<  0)	/* enable protected mode	*/
 #define X86_CR0_EM	(1 <<  2)	/* disable fpu			*/
 #define X86_CR0_TS	(1 <<  3)	/* task switched		*/
-#define X86_CR0_WP	(1 << 16)	/* force write protection on user
-                       read only pages for kernel	*/
+#define X86_CR0_WP	(1 << 16)	/* force write protection on user read only pages for kernel	*/
 #define X86_CR0_NW	(1 << 29)	/*				*/
 #define X86_CR0_CD	(1 << 30)	/*				*/
 #define X86_CR0_PG	(1 << 31)	/* enable paging		*/
@@ -157,10 +156,10 @@ int main() {
   Console c = &cd;
   cclear(c, 0xff);
   cprint(c, bootmsg);
-  // clear the memory from 0x1000 to 0x7000
-  // we will store the bootstrap page tables
-  // here. We will map the first 4 gigabytes, this is rather careless if there
-  // isn't actually that much memory in the machine.
+  // clear the memory from 0x1000 to 0x7000 we will store the
+  // bootstrap page tables here. We will map the first 4 gigabytes,
+  // this is rather careless if there isn't actually that much memory
+  // in the machine.
   mset((void *)0x1000, 0, 6000);
   u64 *p4ml = (u64 *)(0x1000);
   u64 *pdpt = (u64 *)(0x2000);
@@ -247,17 +246,17 @@ int main() {
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
 
+  // TODO: this is just a test pci traversal.
 
-  // this is just a test pci traversal
   pciscan(c);
   {
     PciConf eth = pciconfread(0, 3);
     e1000init(0, &eth, c);
   }
-  //for(;;) {}
+  //
 
   // Random arena code.
-  // Need to write proper tests!
+  // TODO: Need to write proper tests!
   Arena *a;
   arenainit(a, 4000000, (void *)0x1000000);
   int *x = arenapusharray(a, 1000, int);
@@ -269,14 +268,10 @@ int main() {
     x[i] += y[i];
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
-
   ahcipciinit(0, c, 0, 4);
-  for(;;) {}
-
+  for (;;) {}
   // detect cpu features, eventually we want to enable features we find as we go along
   cpudetect(c);
-//  for (;;) {}
-
   // random vector code, need to write proper tests.
   {
     M44 m = (M44){1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
@@ -291,10 +286,6 @@ int main() {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
-
-
-  //for(;;){}
-
   {
     u32 *framebufferaddr;
     {
@@ -327,7 +318,6 @@ int main() {
       framebufferaddr[offset] = 0x000000ff;
       t += 0.00001;
     }
-
     u32* buf = renderglyphs(a);
     copyrect(framebufferaddr, buf, 0, 20, 98);
     rendertext(framebufferaddr, buf, "Hello World.", 0, 50);
