@@ -6,6 +6,120 @@
 #include "console.h"
 #include "mem.h"
 
+#define CMD_CFL_SHIFT	0		/* CFL - Command FIS Length */
+#define CMD_CFL_MASK	(0xf << CMD_CFL_SHIFT)
+#define CMD_CFL(x)	((((x) >> 2) << CMD_CFL_SHIFT) & CMD_CFL_MASK)
+
+typedef enum AtaCommand
+{
+    ATA_NOP                                 = 0x00,
+    ATA_CFA_REQUEST_EXTENDED_ERROR_CODE     = 0x03,
+    ATA_DATA_SET_MANAGEMENT                 = 0x06,
+    ATA_DEVICE_RESET                        = 0x08,
+    ATA_RECALIBRATE                         = 0x10,
+    ATA_READ_SECTORS                        = 0x20,
+    ATA_READ_SECTORS_WITHOUT_RETRIES        = 0x21,
+    ATA_READ_LONG                           = 0x22,
+    ATA_READ_LONG_WITHOUT_RETRIES           = 0x23,
+    ATA_READ_SECTORS_EXT                    = 0x24,
+    ATA_READ_DMA_EXT                        = 0x25,
+    ATA_READ_DMA_QUEUED_EXT                 = 0x26,
+    ATA_READ_NATIVE_MAX_ADDRESS_EXT         = 0x27,
+    ATA_READ_MULTIPLE_EXT                   = 0x29,
+    ATA_READ_STREAM_DMA_EXT                 = 0x2a,
+    ATA_READ_STREAM_EXT                     = 0x2b,
+    ATA_READ_LOG_EXT                        = 0x2f,
+    ATA_WRITE_SECTORS                       = 0x30,
+    ATA_WRITE_SECTORS_WITHOUT_RETRIES       = 0x31,
+    ATA_WRITE_LONG                          = 0x32,
+    ATA_WRITE_LONG_WITHOUT_RETRIES          = 0x33,
+    ATA_WRITE_SECTORS_EXT                   = 0x34,
+    ATA_WRITE_DMA_EXT                       = 0x35,
+    ATA_WRITE_DMA_QUEUED_EXT                = 0x36,
+    ATA_SET_MAX_ADDRESS_EXT                 = 0x37,
+    ATA_CFA_WRITE_SECTORS_WITHOUT_ERASE     = 0x38,
+    ATA_WRITE_MULTIPLE_EXT                  = 0x39,
+    ATA_WRITE_STREAM_DMA_EXT                = 0x3a,
+    ATA_WRITE_STREAM_EXT                    = 0x3b,
+    ATA_WRITE_VERIFY                        = 0x3c,
+    ATA_WRITE_DMA_FUA_EXT                   = 0x3d,
+    ATA_WRITE_DMA_QUEUED_FUA_EXT            = 0x3e,
+    ATA_WRITE_LOG_EXT                       = 0x3f,
+    ATA_READ_VERIFY_SECTORS                 = 0x40,
+    ATA_READ_VERIFY_SECTORS_WITHOUT_RETRIES = 0x41,
+    ATA_READ_VERIFY_SECTORS_EXT             = 0x42,
+    ATA_WRITE_UNCORRECTABLE_EXT             = 0x45,
+    ATA_READ_LOG_DMA_EXT                    = 0x47,
+    ATA_FORMAT_TRACK                        = 0x50,
+    ATA_CONFIGURE_STREAM                    = 0x51,
+    ATA_WRITE_LOG_DMA_EXT                   = 0x57,
+    ATA_TRUSTED_RECEIVE                     = 0x5c,
+    ATA_TRUSTED_RECEIVE_DMA                 = 0x5d,
+    ATA_TRUSTED_SEND                        = 0x5e,
+    ATA_TRUSTED_SEND_DMA                    = 0x5f,
+    ATA_READ_FPDMA_QUEUED                   = 0x60,
+    ATA_WRITE_FPDMA_QUEUED                  = 0x61,
+    ATA_SEEK                                = 0x70,
+    ATA_CFA_TRANSLATE_SECTOR                = 0x87,
+    ATA_EXECUTE_DEVICE_DIAGNOSTIC           = 0x90,
+    ATA_INITIALIZE_DEVICE_PARAMETERS        = 0x91,
+    ATA_DOWNLOAD_MICROCODE                  = 0x92,
+    ATA_STANDBY_IMMEDIATE__ALT              = 0x94,
+    ATA_IDLE_IMMEDIATE__ALT                 = 0x95,
+    ATA_STANDBY__ALT                        = 0x96,
+    ATA_IDLE__ALT                           = 0x97,
+    ATA_CHECK_POWER_MODE__ALT               = 0x98,
+    ATA_SLEEP__ALT                          = 0x99,
+    ATA_PACKET                              = 0xa0,
+    ATA_IDENTIFY_PACKET_DEVICE              = 0xa1,
+    ATA_SERVICE                             = 0xa2,
+    ATA_SMART                               = 0xb0,
+    ATA_DEVICE_CONFIGURATION_OVERLAY        = 0xb1,
+    ATA_NV_CACHE                            = 0xb6,
+    ATA_CFA_ERASE_SECTORS                   = 0xc0,
+    ATA_READ_MULTIPLE                       = 0xc4,
+    ATA_WRITE_MULTIPLE                      = 0xc5,
+    ATA_SET_MULTIPLE_MODE                   = 0xc6,
+    ATA_READ_DMA_QUEUED                     = 0xc7,
+    ATA_READ_DMA                            = 0xc8,
+    ATA_READ_DMA_WITHOUT_RETRIES            = 0xc9,
+    ATA_WRITE_DMA                           = 0xca,
+    ATA_WRITE_DMA_WITHOUT_RETRIES           = 0xcb,
+    ATA_WRITE_DMA_QUEUED                    = 0xcc,
+    ATA_CFA_WRITE_MULTIPLE_WITHOUT_ERASE    = 0xcd,
+    ATA_WRITE_MULTIPLE_FUA_EXT              = 0xce,
+    ATA_CHECK_MEDIA_CARD_TYPE               = 0xd1,
+    ATA_GET_MEDIA_STATUS                    = 0xda,
+    ATA_ACKNOWLEDGE_MEDIA_CHANGE            = 0xdb,
+    ATA_BOOT_POST_BOOT                      = 0xdc,
+    ATA_BOOT_PRE_BOOT                       = 0xdd,
+    ATA_MEDIA_LOCK                          = 0xde,
+    ATA_MEDIA_UNLOCK                        = 0xdf,
+    ATA_STANDBY_IMMEDIATE                   = 0xe0,
+    ATA_IDLE_IMMEDIATE                      = 0xe1,
+    ATA_STANDBY                             = 0xe2,
+    ATA_IDLE                                = 0xe3,
+    ATA_READ_BUFFER                         = 0xe4,
+    ATA_CHECK_POWER_MODE                    = 0xe5,
+    ATA_SLEEP                               = 0xe6,
+    ATA_FLUSH_CACHE                         = 0xe7,
+    ATA_WRITE_BUFFER                        = 0xe8,
+    ATA_WRITE_SAME                          = 0xe9,
+    ATA_FLUSH_CACHE_EXT                     = 0xea,
+    ATA_IDENTIFY_DEVICE                     = 0xec,
+    ATA_MEDIA_EJECT                         = 0xed,
+    ATA_IDENTIFY_DMA                        = 0xee,
+    ATA_SET_FEATURES                        = 0xef,
+    ATA_SECURITY_SET_PASSWORD               = 0xf1,
+    ATA_SECURITY_UNLOCK                     = 0xf2,
+    ATA_SECURITY_ERASE_PREPARE              = 0xf3,
+    ATA_SECURITY_ERASE_UNIT                 = 0xf4,
+    ATA_SECURITY_FREEZE_LOCK                = 0xf5,
+    ATA_SECURITY_DISABLE_PASSWORD           = 0xf6,
+    ATA_READ_NATIVE_MAX_ADDRESS             = 0xf8,
+    ATA_SET_MAX                             = 0xf9
+} AtaCommand;
+
 /*
 
   HBA State machine (c.f 5.1)
@@ -34,6 +148,25 @@ enum {
   AHCI_CMD_BME = (1 << 2),
   AHCI_CMD_SCE = (1 << 3)
 };
+enum {
+  AHCI_PxIS_PCS = 1,
+};
+
+enum {
+  AHCI_DMAReceive,
+  AHCI_DMATransmit,
+  AHCI_PIOTransmit,
+  AHCI_PIOReceive,
+};
+
+#define BYTES_PER_PRD_SHIFT	20
+#define BYTES_PER_PRD		(4 << 20)
+
+#define PRD_TABLE_I		(1 << 31) /* I - Interrupt on Completion */
+#define PRD_TABLE_BYTES_MASK	0x3fffff
+#define PRD_TABLE_BYTES(x)	(((x) - 1) & PRD_TABLE_BYTES_MASK)
+
+
 // Logic block addressing (LBA)
 enum {
   AHCI_PxCMD_ST = (1 << 0),
@@ -131,7 +264,7 @@ struct SataCmdFis {
 
 // For documentation see:
 // http://www.intel.com/content/www/us/en/io/serial-ata/serial-ata-ahci-spec-rev1_1.html
-typedef volatile struct {
+volatile struct AhciPort {
   u64 commandlist_base_addr;
   u64 frameinfo_base_addr;
   u32 interrupt_status;
@@ -149,10 +282,11 @@ typedef volatile struct {
   u32 fis_based_switch;
   u32 _reserved1[11];
   u32 _vendor[4];
-} __attribute__((packed)) AhciPort;
+} __attribute__((packed));
+
 // Host Bus Adapter Control
 // See section 3.1
-typedef struct {
+struct AhciControl {
   u32 capabilties;
   u32 global_host_control;
   u32 interrupt_status;
@@ -167,9 +301,9 @@ typedef struct {
   u32 _reserved0[29];
   u32 _vendor[24];
   AhciPort ports[32];
-} AhciControl;
+};
 
-typedef volatile struct {
+volatile struct  ReceivedFis {
     u8 dma_setup_fis[28];
     u8 _reserved0[4];
     u8 pio_setup_fis[20];
@@ -179,15 +313,16 @@ typedef volatile struct {
     u8 set_device_bits_fis[8];
     u8 unknown_fis[64];
     u8 _reserved3[96];
-} ReceivedFis;
+};
 
-typedef volatile struct {
+volatile struct AhciCommand {
   u16 cmd;
   u16 prdt_length;
   u32 prd_bytes;
   u64 cmdtable_base;
   u8 _reserved[16];
-} AhciCommand;
+};
+
 // Section 4.2.2
 typedef struct AhciCommandHeader {
   u16 flags;
@@ -197,90 +332,19 @@ typedef struct AhciCommandHeader {
   u32 reserved_1[4];           // Reserved
 } __attribute__((packed)) AhciCommandHeader;
 
-typedef volatile struct {
-  u8 fis_raw[64];
+typedef struct {
+  u32 basel;
+  u32 baseu;
+  u32 reserved_2;
+  u32 descriptorinformation;
+} __attribute__((packed)) AhciPrdt;
+
+volatile struct AhciCommandTable{
+  u32 fis_raw[16];
   u8 atapi_cmd[16];
   u8 reserved_1[48];
-  struct {
-    u32 basel;
-    u32 baseu;
-    u32 flags;
-  } prdt[];
-} AhciCommandTable;
-
-typedef struct {
-  AhciControl *control;
-  AhciPort *port;
-  AhciCommand *commandlist;
-  AhciCommandTable *commandtable;
-  ReceivedFis *receivedfis;
-  u8 *buf, *userbuffer;
-  int writeback;
-  u64 bufferlength;
-  int identify;
-  int readsectors;
-} AhciDev;
-
-typedef struct FisData {
-  u8 fis_type;             // FIS_TYPE_DATA
-  u8 port_multiplier_port; // actually only the first 4 bits.
-  u8 reserver0[2];
-  u32 data[1]; // Payload
-} __attribute__((packed)) FISData;
-
-typedef struct FISRegD2H {
-  u8 fis_type; // FIS_TYPE_REG_D2H
-  u8 port_multiplier_interrupt;
-  u8 status; // Status register
-  u8 error;  // Error register
-  u64 lba;
-  u16 count;
-  u8 reserved[6];
-} __attribute__((packed)) FISRegD2H;
-
-typedef struct FISRegH2D {
-  u8 fis_type; // FIS_TYPE_REG_H2D
-  u8 flags;
-  u8 command;  // Command register
-  u8 featurel; // Feature register, 7:0
-  u8 lba0;     // LBA low register, 7:0
-  u8 lba1;     // LBA mid register, 15:8
-  u8 lba2;     // LBA high register, 23:16
-  u8 device;   // Device register
-  u8 lba3;     // LBA register, 31:24
-  u8 lba4;     // LBA register, 39:32
-  u8 lba5;     // LBA register, 47:40
-  u8 featureh; // Feature register, 15:8
-  u16 count;
-  u8 icc;     // Isochronous command completion
-  u8 control; // Control register
-  u8 rsv1[4]; // Reserved
-} __attribute__((packed)) FISRegH2D;
-
-typedef struct FISPioSetup {
-  u8 fis_type; // FIS_TYPE_PIO_SETUP
-  u32 flags;
-  u8 status; // Status register
-  u8 error;  // Error register
-  u64 lba;
-  u16 count;
-  u8 rsv3;     // Reserved
-  u8 e_status; // New value of status register
-  u16 tc;      // Transfer count
-  u8 rsv4[2];  // Reserved
-} __attribute__((packed)) FISPioSetup;
-
-typedef struct FisDMASetup {
-  u8 fis_type; // FIS_TYPE_DMA_SETUP
-  u16 flags;
-  u64 DMAbufferID; // DMA Buffer Identifier. Used to Identify DMA buffer in host
-                   // memory. SATA Spec says host specific and not in Spec.
-                   // Trying AHCI spec might work.
-  u32 reserved1;   // More reserved
-  u32 DMAbufOffset;  // Byte offset into buffer. First 2 bits must be 0
-  u32 TransferCount; // Number of bytes to transfer. Bit 0 must be 0
-  u32 reserved2;
-} __attribute__((packed)) FISDMASetup;
+  AhciPrdt prdt[65535];
+};
 
 static inline u32 _ahciclearstatus(volatile u32 *const reg)
 {
@@ -292,42 +356,102 @@ static inline u32 _ahciclearstatus(volatile u32 *const reg)
 #define ahciclearstatus(p, r) _ahciclearstatus(&(p)->r)
 
 // ahci read and write
-void ahciwrite(AhciPort const *port) {
+void ahciwriteblocking(AhciPort const *port) {
 }
-/* void ahciread(AhciPort * port, u64 start, u64 count, u64 buf) { */
-/*   // Setup command list */
-/*   port->interrupt_status = 0xffff; */
-/*   int slot = ahcifindcmdslot(port); */
-/*   u64 addr = 0; */
-/*   AhciCommandHeader *cmdheader = (AhciCommandHeader*)port->commandlist_base_addr; */
-/*   cmdheader += slot; */
-/*   cmdheader->flags |= (); */
-/*   cmdheader->prdtl = ((count-1)>>4) + 1; */
 
-/*   AhciCommandTable *cmdtbl = (AhciCommandTable*)(cmdheader->command_table_base_addr); */
+void ahciwriteasync(AhciPort const *port) {
+}
 
-/*   for (int i = 0, N=cmdheader->prdtl-1; i < N; ++i) { */
-/*     cmdtbl->prdt[i].basel = buf & 0xffffffff; */
-/*     cmdtbl->prdt[i].baseu = ((buf << 32) & 0xffffffff); */
-/*     cmdtbl->prdt[i].flags = ; */
-/*     buf += 4*1024; */
-/*     count -= 16; */
-/*   } */
+typedef struct {
+  u64 nextsector;
+  u64 nextmemory;
+  u16 readsectors;
+} AhciAsyncRead;
 
-/*   // Command FIS setup */
-/*   FISRegH2D *cmdfis = (FISRegH2D*)(&cmdtbl->fis_raw); */
-/*   cmdfis->fis_type = FIS_TYPE_REG_H2D; */
-/*   cmdfis->flags = */
-/*   cmdfis->lba0 = */
-/*   cmdfis->lba1 = */
-/*   cmdfis->lba2 = */
-/*   cmdfis->device = */
-/*   cmdfis->lba3 = */
-/*   cmdfis->lba4 = */
-/*   cmdfis->lba5 = */
-/*   cmdfis->count = count; */
-/*   // PRDT setup */
-/* } */
+
+
+static int ahcicommandslotexec(AhciDev const dev) {
+  const int slot = 0;
+  if (!(dev->port->command_status & AHCI_PxCMD_CR)) {
+    return -1;
+  }
+  dev->port->command_issue |= (1<<slot); // trigger command execution
+  // poll for completetion
+
+  while ((dev->port->command_issue & (1<<slot))) {
+    /* if (port->interrupt_status & AHCI_PxIS_TFES) { // task file error */
+    /* } */
+  }
+}
+
+static int ahciidentifydevice(AhciDev const dev, u64 bufbase)
+{
+  // ahcicommandslotprepare(dev, bufbase, 512, 0);
+    dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
+    dev->commandtable->fis_raw[1] = FIS_H2D_CMD;
+    dev->commandtable->fis_raw[2] = ATA_IDENTIFY_DEVICE;
+    if ((ahcicommandslotexec(dev) < 0) || (dev->commandlist->prd_bytes != 512))
+        return -1;
+    else
+        return 0;
+}
+
+void ahcireadasync() {
+
+}
+
+AhciBlockingRead ahcireadblocking(AhciDev dev, u64 src, u64 dst, u64 length) {
+  AhciPort *port = dev->port;
+  AhciBlockingRead res = {src, dst, 0};
+
+  if (src >= (1ULL << 48)) {
+    return res;
+  }
+  const int slot = 0;
+  int readcount = 0;
+  dev->commandlist[slot].cmd = CMD_CFL(FIS_H2D_FIS_LEN);
+  dev->commandlist[slot].cmdtable_base = (u64)dev->commandtable;
+
+  AhciCommandHeader * cmdheader = ((AhciCommandHeader*)dev->port->commandlist_base_addr) + slot;
+
+  // Physical region descriptor table setup
+  if (length > 0) {
+    u64 prdtlength = ((length - 1) >> BYTES_PER_PRD_SHIFT) + 1;
+    if (prdtlength > 65535) {
+      prdtlength = 65535;
+      length = prdtlength << BYTES_PER_PRD_SHIFT;
+    }
+    dev->commandlist[slot].prdt_length = prdtlength;
+    for (int i = 0; i < prdtlength; ++i) {
+      const int bytes = (length < BYTES_PER_PRD) ? length : BYTES_PER_PRD;
+      dev->commandtable->prdt[i].basel = (dst >> 0) & 0xffffffff;
+      dev->commandtable->prdt[i].baseu = (dst >> 32) & 0xffffffff;
+      dev->commandtable->prdt[i].descriptorinformation = PRD_TABLE_BYTES(bytes);
+      dst += bytes;
+      length -= bytes;
+    }
+  }
+
+
+  u64 addr = 0;
+  cmdheader->flags = 0;
+  if (((length-1)>>4) + 1 >= 65535) {
+    return res;
+  }
+  cmdheader->prdtl = ((length-1)>>4) + 1;
+
+  AhciCommandTable *cmdtbl = (AhciCommandTable*)(cmdheader->command_table_base_addr);
+  // 4.2.3.3 Physical region descriptor table
+  // Contains between 0 and 65535 entries
+
+  // Command FIS setup
+  cmdtbl->fis_raw[ 0] = 0x00258027;
+
+
+
+
+  return res;
+}
 
 /* u32 ahcipread(AhciPort const* port, u64 offset) { */
 /*   port-> */
@@ -337,6 +461,50 @@ int ahcipwaiteq(AhciPort const *port, u32 mask, u32 target) {
   for (int i = 0; i < 1000; ++i) {
   }
   return 1;
+}
+
+void ahcihandleintterrupts(AhciPort *const port) {
+  // 5.5.3
+  // 1. check on which ports there are interrupts pending
+
+  // port->interrupt_status;
+
+  // 2. clear the important interrupt registers
+  // 3. clear the interrupt bits
+  // 4. For non queued commands read PxCI / PxSACT /
+  // 5. recover from errors
+}
+
+void ahciatadmawrite() {
+}
+
+void ahciatadmaread() {
+  // Fetch -> Transmit
+
+  // CFIS:Success
+
+}
+
+
+
+void ahcifindemptycommandslot(AhciPort *const port) {
+  int commandslot = 0;
+  if ((port->command_issue & commandslot) && (port->sata_control & commandslot)) {
+  }
+  // build a command FIS in system memory at this location
+  ((u32 *)(port->commandlist_base_addr))[commandslot] = 0;
+  // 5.5.1
+  // 3.
+  // a. need to set number of PRD table
+  // b. CFL set to length of the command in the cfis area
+  // d. W bit set if data is going to the device
+  // e. P prefetch bit set
+  // f. Port multipliers
+
+  // 4. If it is a queued command PxSACT.DS(commandslot)
+  port->sata_control &= (1<<commandslot);
+  // 5. Set command issue slot
+  port->command_issue &= (1<<commandslot);
 }
 
 
@@ -363,23 +531,6 @@ void ahcireset(AhciControl *const ctrl) {
     }
   }
 }
-
-
-
-
-
-int ahciidentifydevice(AhciDev *const dev, u8 *const buf) {
-  ahcicommandslotprepare(dev, buf, 512, 0);
-  dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
-  dev->commandtable->fis_raw[1] = FIS_H2D_CMD;
-  dev->commandtable->fis_raw[2] = 0x012; // identify command
-  if ((ahcicommandslotexecute(dev) < 0) || (dev->commandlist->prd_bytes != 512)) {
-    return -1;
-  } else {
-    return 0;
-  }
-}
-
 
 int ahcistartcommandengine(Console c, volatile AhciPort * port) {
   int timeout = 1000;
@@ -413,41 +564,6 @@ void ahciportrebase(volatile AhciPort * port) {
 }
 
 
-
-void ahciatareadsectors(AhciDev *const dev, const Lba start, u64 count, u8 *const buffer) {
-
-  switch (dev->readcommand) {
-  case ATA_READ_DMA: {
-
-    break;
-  }
-  case ATA_READ_DMA_EXT: {
-
-    break;
-  }
-  default:
-    break;
-  }
-
-  dev->commandtable->fis_raw[0] = FIS_TYPE_REG_H2D;
-  dev->commandtable->fis_raw[1] = FIS_H2D_CMD;
-  dev->commandtable->fis_raw[2] = atadev->readcommand;
-  dev->commandtable->fis_raw[4] = (start >>  0) & 0xff;
-  dev->commandtable->fis_raw[5] = (start >>  8) & 0xff;
-  dev->commandtable->fis_raw[6] = (start >> 16) & 0xff;
-  dev->commandtable->fis_raw[7] = FIS_H2D_DEV_LBA;
-  //if (atadev->readcommand == ATA_READ_DMA_EXT) {
-    dev->commandtable->fis_raw[ 9] = (start >> 32) & 0xff;
-    dev->commandtable->fis_raw[10] = (start >> 40) & 0xff;
-    //}
-    //dev->commandtable->fis_raw[12] = (sectors >>  0) & 0xff;
-    //dev->commandtable->fis_raw[13] = (sectors >>  8) & 0xff;
-
-  ahcicommandslotexecute();
-
-}
-
-
 u32 ahcichecktype(volatile AhciPort *port) {
   u32 s = port->sata_status;
   u8 ipm, det;
@@ -460,14 +576,14 @@ u32 ahcichecktype(volatile AhciPort *port) {
 }
 
 
-void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *port,
+void ahcideviceinit(Arena *m, Console c, AhciDev const dev, AhciControl *const control, AhciPort *port,
                      const int portnum) {
   const int ncs = AHCI_NCS(control->capabilties);
   // need to be alligned to 1024
   AhciCommand *const commandlist = arenapusharrayalign(m, ncs, AhciCommand, 1024);
   AhciCommandTable *const commandtable = arenapushstructalign(m, AhciCommandTable, 128);
   ReceivedFis *const receivedfis = arenapushstructalign(m, ReceivedFis, 256);
-  AhciDev *const dev = arenapushstruct(m, AhciDev);
+  // AhciDev const dev = arenapushstruct(m, AhciDevDesc);
 
   if (!ahcistopcommandengine(c, port)) {
          // cleanup
@@ -495,8 +611,8 @@ void ahcideviceinit(Arena *m, Console c, AhciControl *const control, AhciPort *p
   case SATA_SIG_ATA: {
     cprint(c, "ahci: found ata device on port "), cprintint(c, portnum, 16, 0),
         cputc(c, '\n');
-    dev->identify = ahciidentifydevice;
-    dev->readsectors = ahciatareadsectors;
+    // dev->identify = ahciidentifydevice;
+    // dev->readsectors = ahciatareadsectors;
     //return ataattachdevice(&dev->atadevice, PORT_TYPE_SATA);
     break;
   }
@@ -520,7 +636,7 @@ static inline int ahciportisactive(const AhciPort *const port)
 }
 
 // ahciprobeport -- initializes a single port
-void ahciprobeport(Arena *m, Console c, AhciControl *const ctrl, AhciPort *port,
+void ahciprobeport(Arena *m, Console c, AhciDev dev, AhciControl *const ctrl, AhciPort *port,
                    const int portnum) {
   // devices that support stagerred spinup, need to be spun up.
   if (ctrl->capabilties & AHCI_CAP_SSS) {
@@ -538,16 +654,17 @@ void ahciprobeport(Arena *m, Console c, AhciControl *const ctrl, AhciPort *port,
   ahciclearstatus(port, sata_error);
   ahciclearstatus(port, interrupt_status);
 
-  ahcideviceinit(m, c, ctrl, port, portnum);
+  ahcideviceinit(m, c, dev, ctrl, port, portnum);
 }
 
 // ahcipciinit -- Initialize a SATA controller and the devices attached to it.
-void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
+AhciDev ahcipciinit(Arena *m, Console c, u8 bus, u8 slot, int* count) {
+  count[0] = 0;
   PciConf conf = pciconfread(bus, slot);
   if (conf.class_code != 0x01 ||
       conf.subclass != 0x06) { // PCI class id 0x01 (Mass storage device) and
                                // subclass id 0x06 (serial ATA).
-    return;
+    return 0;
   }
   cprint(c, "ahci: Found SATA controller ");
   {
@@ -575,7 +692,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   cputc(c, '\n');
   if (ctrl->global_host_control & AHCI_GHC_HOST_RESET) {
     cprint(c, "ahci: Error, controller did not reset.\n");
-    return;
+    return 0;
   }
 
   if (ctrl->capabilties & AHCI_CAP_SAM) { // CAP.SAM == 0
@@ -588,8 +705,6 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   }
 
   const int ncs = AHCI_NCS(ctrl->capabilties);
-  AhciCommand *const cmdarr = arenapusharray(m, ncs, AhciCommand);
-  AhciCommandTable *const cmdtable = arenapushstruct(m, AhciCommandTable);
   // print some info
   {
     const char *speed_in_gbps;
@@ -612,10 +727,17 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
     cprintint(c, slots, 16, 0), cprint(c, ", "), cprintint(c, ports, 16, 0),
         cprint(c, ", "), cprint(c, speed_in_gbps), cputc(c, '\n');
   }
+  for (int i = 0; i < 32; ++i) {
+    if (ctrl->ports_implemented & (1 << i)) {
+      count[0]++;
+    }
+  }
+  AhciDev dev = arenapusharray(m, count[0], AhciDevDesc);
   // Probe for devices attached to the controller.
   for (int i = 0; i < 32; ++i) {
     if (ctrl->ports_implemented & (1 << i)) {
-      ahciprobeport(m, c, ctrl, &ports[i], i+1);
+      ahciprobeport(m, c, &dev[i], ctrl, &ports[i], i+1);
     }
   }
+  return dev;
 }

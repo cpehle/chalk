@@ -268,10 +268,18 @@ int main() {
     x[i] += y[i];
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
-  ahcipciinit(0, c, 0, 4);
-  for (;;) {}
+  int ahcidevcount = 0;
+  AhciDev dev = ahcipciinit(0, c, 0, 4, &ahcidevcount);
+  // u8* buf = arenapusharray(a, 512, u8);
+  // ahcireadblocking(dev, 0, 1, (u64)buf);
+  // if ((buf[510] == 0x55) && buf[511] == 0xAA) {
+  // cprint(c, "Success!\n");
+  // }
+  cprintint(c, ahcidevcount, 16, 0);
+  // for (;;) {}
   // detect cpu features, eventually we want to enable features we find as we go along
   cpudetect(c);
+
   // random vector code, need to write proper tests.
   {
     M44 m = (M44){1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
@@ -286,6 +294,9 @@ int main() {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
+  for (;;) {}
+
+  // graphics only work with bochs emulator
   {
     u32 *framebufferaddr;
     {
