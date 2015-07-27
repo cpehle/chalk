@@ -78,3 +78,45 @@ stosl(void *addr, int data, int cnt)
                "0" (addr), "1" (cnt), "a" (data) :
                "memory", "cc");
 }
+
+
+
+static inline void mmiowrite8(void *p, u8 data)
+{
+    *(volatile u8 *)(p) = data;
+}
+
+static inline u8 mmioread8(void *p)
+{
+    return *(volatile u8 *)(p);
+}
+
+static inline void mmiowrite16(void *p, u16 data)
+{
+    *(volatile u16 *)(p) = data;
+}
+
+static inline u16 mmioread16(void *p)
+{
+    return *(volatile u16 *)(p);
+}
+
+static inline void mmiowrite32(void *p, u32 data)
+{
+    *(volatile u32 *)(p) = data;
+}
+
+static inline u32 mmioread32(void *p)
+{
+    return *(volatile u32 *)(p);
+}
+
+static inline void mmiowrite64(void *p, u64 data)
+{
+    *(volatile u64 *)(p) = data;
+}
+
+static inline u64 mmioread64(void *p)
+{
+    return *(volatile u64 *)(p);
+}

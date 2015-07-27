@@ -635,27 +635,6 @@ static inline int ahciportisactive(const AhciPort *const port)
         == (AHCI_PxSSTS_IPM_ACTIVE | AHCI_PxSSTS_DET_ESTABLISHED);
 }
 
-// ahciprobeport -- initializes a single port
-void ahciprobeport(Arena *m, Console c, AhciDev dev, AhciControl *const ctrl, AhciPort *port,
-                   const int portnum) {
-  // devices that support stagerred spinup, need to be spun up.
-  if (ctrl->capabilties & AHCI_CAP_SSS) {
-    port->command_status |= AHCI_PxCMD_SUD;
-  }
-  if ((ctrl->capabilties & AHCI_CAP_SSS) || !(ctrl->ports_implemented & ((1 << (portnum - 1)) - 1))) {
-    for (int i = 0; i<10; ++i) { cputc(c,'.');}
-  }
-  if (!ahciportisactive(port)) {
-    // cprint(c, "port failed to activate");
-    return;
-  }
-  cputc(c, '\n');
-
-  ahciclearstatus(port, sata_error);
-  ahciclearstatus(port, interrupt_status);
-
-  ahcideviceinit(m, c, dev, ctrl, port, portnum);
-}
 
 // ahcipciinit -- Initialize a SATA controller and the devices attached to it.
 AhciDev ahcipciinit(Arena *m, Console c, u8 bus, u8 slot, int* count) {
@@ -694,7 +673,6 @@ AhciDev ahcipciinit(Arena *m, Console c, u8 bus, u8 slot, int* count) {
     cprint(c, "ahci: Error, controller did not reset.\n");
     return 0;
   }
-
   if (ctrl->capabilties & AHCI_CAP_SAM) { // CAP.SAM == 0
     ctrl->global_host_control |= AHCI_GHC_AHCI_ENABLE;
   }
@@ -736,7 +714,27 @@ AhciDev ahcipciinit(Arena *m, Console c, u8 bus, u8 slot, int* count) {
   // Probe for devices attached to the controller.
   for (int i = 0; i < 32; ++i) {
     if (ctrl->ports_implemented & (1 << i)) {
-      ahciprobeport(m, c, &dev[i], ctrl, &ports[i], i+1);
+      {
+        AhciPort * const port = &ports[i];
+        const int portnum = i+1;
+        // devices that support stagerred spinup, need to be spun up.
+        if (ctrl->capabilties & AHCI_CAP_SSS) {
+          port->command_status |= AHCI_PxCMD_SUD;
+        }
+        if ((ctrl->capabilties & AHCI_CAP_SSS) ||
+            !(ctrl->ports_implemented & ((1 << (portnum - 1)) - 1))) {
+          for (int i = 0; i < 10; ++i) {
+            cputc(c, '.');
+          }
+        }
+        if (!ahciportisactive(port)) {
+          break;
+        }
+        ahciclearstatus(port, sata_error);
+        ahciclearstatus(port, interrupt_status);
+
+        ahcideviceinit(m, c, dev, ctrl, port, portnum);
+      }
     }
   }
   return dev;

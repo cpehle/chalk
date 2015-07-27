@@ -270,11 +270,13 @@ int main() {
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
   int ahcidevcount = 0;
   AhciDev dev = ahcipciinit(0, c, 0, 4, &ahcidevcount);
+  for (;;) {}
   // u8* buf = arenapusharray(a, 512, u8);
   // ahcireadblocking(dev, 0, 1, (u64)buf);
   // if ((buf[510] == 0x55) && buf[511] == 0xAA) {
   // cprint(c, "Success!\n");
   // }
+  // &
   cprintint(c, ahcidevcount, 16, 0);
   // for (;;) {}
   // detect cpu features, eventually we want to enable features we find as we go along
@@ -294,7 +296,7 @@ int main() {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
-  for (;;) {}
+  // for (;;) {}
 
   // graphics only work with bochs emulator
   {
@@ -315,11 +317,13 @@ int main() {
       }
     }
 
+    // draw a "line"
     for (int i = 0; i < 1920; ++i) {
       offset = (50 * 1920 + i);
       // Format is 0x00rrggbb, can use first byte for alpha blending
       framebufferaddr[offset] = 0x00ff0000;
     }
+
     float t = 0;
     BezierData b = {4,{{50,68,0,0},{70,220,0,0},{80,40,0,0},{90,100,0,0}}};
 
