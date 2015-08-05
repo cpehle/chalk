@@ -35,7 +35,7 @@ void cputc(Console cons, int c) {
   movecursor(cons);
 }
 
-void cprint(Console c, char *str) {
+void cprint(Console c, const char *str) {
   char ch;
   while ((ch = *str++)) {
     cputc(c, ch);

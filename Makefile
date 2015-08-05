@@ -46,8 +46,9 @@ ahci.o: ahci.c ahci.h
 	$(CC32) $(CFLAGS32) -c $<
 e1000.o: e1000.c e1000.h
 	$(CC32) $(CFLAGS32) -c $<
-interrupts.o: interrupts.s
-	$(CC32) $(CFLAGS32) interrupts.s -c -o interrupts.o
+
+
+
 arena.o: arena.c arena.h
 	$(CC32) $(CFLAGS32) -c $<
 detect.o: detect.c detect.h u.h dat.h console.h
@@ -56,7 +57,7 @@ vec.o: vec.c vec.h
 	$(CC32) $(CFLAGS32) -c vec.c -o vec.o
 graphics.o: graphics.c graphics.h
 	$(CC32) $(CFLAGS32) -c graphics.c -o graphics.o
-font8x16.o: font8x16.o font8x16.h
+font8x16.o: font8x16.h font8x16.c
 	$(CC32) $(CFLAGS32) -c font8x16.c -o font8x16.o
 
 %.o: %.c

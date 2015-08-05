@@ -5,24 +5,11 @@ typedef struct {
   u16 readsectors;
 } AhciBlockingRead;
 
-typedef struct AhciControl AhciControl;
-typedef struct AhciPort AhciPort;
-typedef struct AhciCommand AhciCommand;
-typedef struct AhciCommandTable AhciCommandTable;
-typedef struct ReceivedFis ReceivedFis;
-typedef struct AhciDevDesc {
-        AhciControl *control;
-        AhciPort *port;
-        AhciCommand *commandlist;
-        AhciCommandTable *commandtable;
-        ReceivedFis *receivedfis;
-        u8 *buf, *userbuffer;
-        int writeback;
-        u64 bufferlength;
-        int identify;
-        int readsectors;
-} AhciDevDesc;
-typedef AhciDevDesc* AhciDev;
+typedef volatile struct AhciControl AhciControl;
+typedef volatile struct AhciPort AhciPort;
+typedef volatile struct AhciCommand AhciCommand;
+typedef volatile struct AhciCommandTable AhciCommandTable;
+typedef volatile struct ReceivedFis ReceivedFis;
 
-AhciDev ahcipciinit(Arena *m, Console c, u8 bus, u8 slot, int* count);
-AhciBlockingRead ahcireadblocking(AhciDev dev, u64 src, u64 dest, u64 count);
+void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot);
+AhciBlockingRead ahcireadblocking(AhciPort * const port, u64 src, u64 dst, u64 count);

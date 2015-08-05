@@ -1,3 +1,12 @@
+#include "u.h"
+
+typedef u64 Font;
+typedef u32 Color;
+
+typedef struct Buffer {
+
+} Buffer;
+
 typedef struct {
         Buffer buffer;
         Font font;
@@ -5,11 +14,10 @@ typedef struct {
         u16 verticaloffset;
 } Writer;
 
-
-void write();
-void writeln();
-void writeint();
-void writestring();
-void writehex();
-void writereal();
-void writedate();
+void write(Writer w);
+void writeln(Writer w);
+void writeint(Writer w);
+void writestring(Writer w);
+void writehex(Writer w);
+void writereal(Writer w);
+void writedate(Writer w);

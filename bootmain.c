@@ -6,8 +6,7 @@
 // sector 1 and then jumps to the kernel entry routine.
 
 #include "u.h"
-#include "x86.h"
-#include "memlayout.h"
+#include "io.h"
 
 #define SECTSIZE  512
 
@@ -79,7 +78,7 @@ waitdisk(void)
 
 // Read a single sector at offset into dst.
 void
-readsect(void *dst, uint offset)
+readsect(void *dst, u32 offset)
 {
   // Issue command.
   waitdisk();
@@ -98,9 +97,9 @@ readsect(void *dst, uint offset)
 // Read 'count' bytes at 'offset' from kernel into physical address 'pa'.
 // Might copy more than asked.
 void
-readseg(uchar* pa, uint count, uint offset)
+readseg(u8* pa, u32 count, u32 offset)
 {
-  uchar* epa;
+  u8* epa;
 
   epa = pa + count;
 

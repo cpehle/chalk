@@ -116,8 +116,21 @@ static void e1000poll() {
 
 }
 
+typedef struct Ethdevdesc {
+  int txwrite;
+  int txdesccount;
+  u32* mmioaddr;
+} Ethdevdesc;
+typedef Ethdevdesc* Ethdev;
 
-static void e1000send(Ethdev dev, Buf buf) {
+typedef struct Ethbufdesc {
+  u64 start;
+  u64 end;
+} Ethbufdesc;
+typedef Ethbufdesc* Ethbuf;
+
+
+static void e1000send(Ethdev dev, Ethbuf buf) {
   TransDesc *t;
   u8* mmio;
   while(!(t->status & 0xf)) {
@@ -133,18 +146,21 @@ static void e1000send(Ethdev dev, Buf buf) {
 
 
 void e1000init(Arena *a, PciConf *c, Console cons) {
+  Ethdevdesc ethdev;
   if ((c->vendor_id != 0x8086) ||
       !(c->device_id == 0x100e || c->device_id == 0x1503)) {
     return;
   }
   PciDevConf d = c->dev;
   volatile u32* mmio = d.base_address_register[0].address;
+  ethdev.mmioaddr = mmio;
   cprintint(cons, (u32)mmio, 16, 0);
 
 
   u8 mac[6] = {};
   // TODO: Should determine number of receive and transmission registers.
   const int Ntx = 32, Nrx = 8;
+  ethdev.txdesccount = Ntx;
   u32 ral = mmio[Rral/4];
   if (ral) {
     u32 rah = mmio[Rrah/4];

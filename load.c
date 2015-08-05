@@ -203,7 +203,6 @@ int main() {
     cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
     cprint(c, "\nNumber of entries in program section "),
         cprintint(c, ehdr->e_phnum, 16, 0);
-
     cprint(c, "\nType of entry in Program Header: "),
         cprintint(c, phdr->p_type, 16, 0);
     cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
@@ -219,6 +218,7 @@ int main() {
     // entry is where this code expects to be loaded.
     u64 entry = ehdr->e_entry;
   }
+  for (;;) {}
   // that doesn't really work though...
   // We should check support for long mode via cpu id here!
   // This sequence to enable long mode is documented in the AMD Manual for example.
@@ -268,25 +268,34 @@ int main() {
     x[i] += y[i];
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
-  int ahcidevcount = 0;
-  AhciDev dev = ahcipciinit(0, c, 0, 4, &ahcidevcount);
-  for (;;) {}
+
+  ahcipciinit(0, c, 0, 4);
+  for(;;) {}
   // u8* buf = arenapusharray(a, 512, u8);
   // ahcireadblocking(dev, 0, 1, (u64)buf);
   // if ((buf[510] == 0x55) && buf[511] == 0xAA) {
   // cprint(c, "Success!\n");
   // }
   // &
-  cprintint(c, ahcidevcount, 16, 0);
+
   // for (;;) {}
   // detect cpu features, eventually we want to enable features we find as we go along
   cpudetect(c);
 
   // random vector code, need to write proper tests.
   {
-    M44 m = (M44){1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-    V4 v = {1, 0, 0, 0};
-    V4 w = {0, 1, 0, 0};
+    M44 m = (M44){1,1,0,0,
+                  0,1,0,0,
+                  0,0,1,0,
+                  0,0,0,1};
+    V4 v = {1,
+            0,
+            0,
+            0};
+    V4 w = {0,
+            1,
+            0,
+            0};
     V4 u = v4avv(v, w);
     cprintv4(c, u);
     cprintv4(c, v4msv(2, u));
@@ -312,7 +321,7 @@ int main() {
     for (int i = 0; i < 1920; ++i) {
       for (int j = 0; j<1200; ++j) {
       offset = (j * 1920 + i);
-      // Format is 0x00rrggbb, can use first byte for alpha blending
+      // Format is 0x00rrggbb, can use first byte for alpha blending / z-buffering
       framebufferaddr[offset] = 0x00eeeeee;
       }
     }
@@ -337,6 +346,7 @@ int main() {
     copyrect(framebufferaddr, buf, 0, 20, 98);
     rendertext(framebufferaddr, buf, "Hello World.", 0, 50);
     rendertext(framebufferaddr, buf, "Hello World.", 0, 66);
+    rendertext(framebufferaddr, buf, "This is a test.", 0, 96);
     rendertext(framebufferaddr, buf, "Hello World.", 8*20, 82);
     rendertext(framebufferaddr, buf, "12 23 45 332", 8*20, 60*16);
 
