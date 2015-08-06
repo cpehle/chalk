@@ -143,19 +143,18 @@ void ahcicommandslotprepare(Ahcidev *const d) {
   }
 }
 
-void ahcicommandslotexecute() {
+void ahcicommandslotexecute(Ahcidev *const d) {
 
 }
 
 void ahciidentifydevice(Ahcidev *const d) {
   int i = 0;
-  //ahcicommandslotprepare(d, 0);
-
+  ahcicommandslotprepare(d);
   mset(&d->commandtable[i], 0, sizeof(Ahcicmdtable));
   d->commandtable[i].fis[0] = 0x27; // Fis Host to Device
   d->commandtable[i].fis[1] = 0x80; // Host to Device Command
   d->commandtable[i].fis[2] = 0;
-  ahcicommandslotexecute();
+  ahcicommandslotexecute(d);
 }
 
 
@@ -198,7 +197,12 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       const int ncs = 20;
       Ahcidev *const dev = arenapushstruct(m, Ahcidev);
       Ahcicmd *const cl = arenapusharrayalign(m, ncs, Ahcicmd, 1024);
+      Ahcicmdtable *const t = arenapusharrayalign(m, ncs, Ahcicmdtable, 128);
       Ahcircvdfis *const rf = arenapushstructalign(m, Ahcircvdfis, 256);
+      dev->port = p;
+      dev->commandlist = cl;
+      dev->commandtable = t;
+
 
       if (ahcistopcommandengine(p)) {
         cprint(c, "ahci: failed to stop command engine.");

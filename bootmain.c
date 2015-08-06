@@ -23,6 +23,13 @@ struct mbheader {
 
 void readseg(u8*, u32, u32);
 
+void bootclrscr(u16 color) {
+  u16* buf = (u16*)(0xb8000);
+  for (int i = 0; i < 80 * 25; ++i) {
+      buf[i] = color << 12;
+  }
+}
+
 void
 bootmain(void)
 {
@@ -32,7 +39,8 @@ bootmain(void)
   u32 n;
 
   x = (u32*) 0x10000; // scratch space
-
+  outw(0x3D4,0x200A);
+  bootclrscr(0x0f);
   // multiboot header must be in the first 8192 bytes
   readseg((u8*)x, 8192, 0);
 
@@ -41,19 +49,21 @@ bootmain(void)
       if ((x[n] + x[n+1] + x[n+2]) == 0)
         goto found_it;
 
+
   // failure
   return;
 
 found_it:
+  bootclrscr(0xee);
   hdr = (struct mbheader *) (x + n);
 
   if (!(hdr->flags & 0x10000))
     return; // does not have load_* fields, cannot proceed
+  bootclrscr(0xaa);
   if (hdr->load_addr > hdr->header_addr)
     return; // invalid;
   if (hdr->load_end_addr < hdr->load_addr)
     return; // no idea how much to load
-
   readseg((u8*) hdr->load_addr,
     (hdr->load_end_addr - hdr->load_addr),
     (n * 4) - (hdr->header_addr - hdr->load_addr));

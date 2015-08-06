@@ -34,7 +34,7 @@ seta20.2:
 
 .code32
 start32:
-  movw    $(SEG_KDATA<<3), %ax    # Our data segment selector
+  movw    $(2<<3), %ax    # Our data segment selector
   movw    %ax, %ds                # -> DS: Data Segment
   movw    %ax, %es                # -> ES: Extra Segment
   movw    %ax, %ss                # -> SS: Stack Segment
@@ -55,13 +55,14 @@ start32:
 spin:
   jmp     spin
 
-
-
 .p2align 2
 gdt:
-    SEG_NULLASM
-    SEG_ASM(STA_X|STA_R, 0x0, 0xffffffff)
-    SEG_ASM(STA_W, 0x0, 0xffffffff)
+    .word 0,0
+    .byte 0,0,0,0
+    .word 0xffff, 0x0
+    .byte 0x0, 0x9a, 0xcf, 0x0
+    .word 0xffff, 0x0
+    .byte 0x0, 0x92, 0xcf, 0x0
 
 gdtdesc:
   .word   (gdtdesc - gdt - 1)             # sizeof(gdt) - 1

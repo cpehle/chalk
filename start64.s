@@ -2,8 +2,6 @@
     .code64
     .section .text
     .align 16
-
-
 .type _start, @function
 _start:
 

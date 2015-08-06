@@ -80,18 +80,37 @@ typedef struct {
   u64 sh_entsize;
 } Elf64_Shdr;
 
-struct mbheader {
-  u32 magic;
-  u32 flags;
-  u32 checksum;
-  u32 header_addr;
-  u32 load_addr;
-  u32 load_end_addr;
-  u32 bss_end_addr;
-  u32 entry_addr;
-};
 
 
+typedef struct {
+    u32 flags;			//required
+    u32 memLower;		//if bit 0 in flags are set
+    u32 memUpper;		//if bit 0 in flags are set
+    u32 bootDevice;		//if bit 1 in flags are set
+    u32 commandLine;		//if bit 2 in flags are set
+    u32 moduleCount;		//if bit 3 in flags are set
+    u32 moduleAddress;		//if bit 3 in flags are set
+    u32 syms[4];		//if bits 4 or 5 in flags are set
+    u32 memMapLength;		//if bit 6 in flags is set
+    u32 memMapAddress;		//if bit 6 in flags is set
+    u32 drivesLength;		//if bit 7 in flags is set
+    u32 drivesAddress;		//if bit 7 in flags is set
+    u32 configTable;		//if bit 8 in flags is set
+    u32 apmTable;		//if bit 9 in flags is set
+    u32 vbeControlInfo;	//if bit 10 in flags is set
+    u32 vbeModeInfo;		//if bit 11 in flags is set
+    u32 vbeMode;		// all vbe_* set if bit 12 in flags are set
+    u32 vbeInterfaceSeg;
+    u32 vbeInterfaceOff;
+    u32 vbeInterfaceLength;
+} __attribute__((packed)) Multibootinfo;
+
+typedef struct {
+  u32 modstart;
+  u32 modend;
+  u32 string;
+  u32 _r0;
+} __attribute__((packed)) Multibootmodule;
 
 static char* bootmsg = "Chalk.\n";
 
@@ -150,12 +169,25 @@ int longmodeactive() {
 
 extern char* bootstrap_stack_end;
 
-
-int main() {
+int main(u32 magic, u32 mbootinfoaddr) {
   ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
   Console c = &cd;
   cclear(c, 0xff);
   cprint(c, bootmsg);
+#if 0
+  if (magic != 0x2BADB002) {
+    cprint(c, "boot: invalid boot magic.\n");
+    for (;;);
+  }
+
+  Multibootinfo *const mbi = (Multibootinfo *) mbootinfoaddr;
+  if (!(mbi->flags & (1 << 3))) {
+    for (;;) {}
+  }
+
+  Multibootmodule *const mbm = (Multibootmodule *)mbi->moduleAddress;
+#endif
+
   // clear the memory from 0x1000 to 0x7000 we will store the
   // bootstrap page tables here. We will map the first 4 gigabytes,
   // this is rather careless if there isn't actually that much memory
@@ -176,49 +208,58 @@ int main() {
       pde += 0x200000;
     }
   }
-
-
+#if 0
   {
-    // We arranged the linker to put the 64bit elf file at 0x200000
-    // and managed to convince GRUB to load it for us....
-    // whether or not that was such a great idea is another question.
-    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)(0x200000);
-    if (ehdr->e_ident[0] != 0x7f || ehdr->e_ident[1] != 'E' ||
-        ehdr->e_ident[2] != 'L' || ehdr->e_ident[3] != 'F') {
+    Elf64_Ehdr *hdr = 0;
+    Elf64_Phdr *phdr = 0;
+    Elf64_Shdr *shdr = 0;
+    u64 srcstart = 0;
+    u64 srcend = 0;
+    u64 dststart = 0;
+    u64 dstend = 0;
+    hdr  = (Elf64_Ehdr *)(mbm->modstart);
+    if (hdr->e_ident[0] != 0x7f || hdr->e_ident[1] != 'E' ||
+        hdr->e_ident[2] != 'L' || hdr->e_ident[3] != 'F') {
       cprint(c, "Invalid ELF Magic!\n");
     }
-    Elf64_Phdr *phdr = (Elf64_Phdr *)((u8 *)ehdr + ehdr->e_phoff);
-    Elf64_Phdr *ephdr = phdr + ehdr->e_phnum;
-    for (; phdr < ephdr; phdr++) {
-      u8 *pa = (u8 *)phdr->p_paddr;
+
+    phdr = (Elf64_Phdr *)((u8 *)hdr + hdr->e_phoff);
+    for (int i = 0; i < hdr->e_phnum; ++i) {
+      if (phdr[i].p_type != 1) {
+        continue;
+      }
+      srcstart = mbm->modstart + phdr[i].p_offset;
+      srcend = srcstart + phdr[i].p_memsz;
+      dststart = phdr[i].p_paddr;
+      dstend = dststart + phdr[i].p_memsz;
+
+      mmove(dststart, srcstart, phdr[i].p_filesz);
+      mset(dststart + phdr[i].p_filesz, 0, phdr[i].p_memsz - phdr[i].p_filesz);
+
+      cprintint(c, phdr[i].p_paddr, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_align, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_filesz, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_offset, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_memsz, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_type, 16, 0), cputc(c,'\n');
+      cprintint(c, phdr[i].p_vaddr, 16, 0), cputc(c,'\n');
+
       // readseg(pa, phdr->p_filesz, phdr->p_offset);
     }
 
     for (int i = 0; i < 4; ++i) {
-      cputc(c, ehdr->e_ident[i]);
+      cputc(c, hdr->e_ident[i]);
     }
-    if (!(ehdr->e_machine == 0x3E)) {
-      cprint(c, "\nExpected x86_64-ELF.\n");
+    cputc(c,'\n');
+    if (!(hdr->e_machine == 0x3E)) {
+      cprint(c, "elf: expected x86_64-ELF.\n");
+      return 0;
     }
-    cprint(c, "\nProgram header offset:"), cprintint(c, ehdr->e_phoff, 16, 0);
-    cprint(c, "\nNumber of entries in program section "),
-        cprintint(c, ehdr->e_phnum, 16, 0);
-    cprint(c, "\nType of entry in Program Header: "),
-        cprintint(c, phdr->p_type, 16, 0);
-    cprint(c, "\nIt is at offset: "), cprintint(c, phdr->p_offset, 16, 0);
-    cprint(c, "\nExpects to be loaded at virtual address: "),
-        cprintint(c, phdr->p_vaddr, 16, 0);
-    cprint(c, "\nExpects to be loaded at physical address: "),
-        cprintint(c, phdr->p_paddr, 16, 0);
-    cprint(c, "\nSize in file: "), cprintint(c, phdr->p_filesz, 16, 0);
-    cprint(c, "\nSize in memory: "), cprintint(c, phdr->p_memsz, 16, 0);
-    cprint(c, "\nSize of entries in program section "),
-        cprintint(c, ehdr->e_phentsize, 16, 0);
-    cputc(c, '\n');
-    // entry is where this code expects to be loaded.
-    u64 entry = ehdr->e_entry;
+    if (hdr->e_type == 2) {
+      cprint(c, "elf: found executable.\n");
+    }
   }
-  for (;;) {}
+#endif
   // that doesn't really work though...
   // We should check support for long mode via cpu id here!
   // This sequence to enable long mode is documented in the AMD Manual for example.
@@ -231,7 +272,7 @@ int main() {
     cprint(c, "Failed to enable long mode.");
     for(;;);
   }
-  cprint(c, "We have enabled long mode!\n");
+
   // Actually this is not quite true, in fact we need to
   // do a long jump at some point for it to actually work.
   // need to find ahci in order to load kernel from disk.
@@ -247,8 +288,8 @@ int main() {
   lgdt(&r);
 
   // TODO: this is just a test pci traversal.
-
   pciscan(c);
+  // Ethernet
   {
     PciConf eth = pciconfread(0, 3);
     e1000init(0, &eth, c);
@@ -269,14 +310,60 @@ int main() {
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
 
+  // acpi
+  {
+    u8 *p = (u8 *)0x000e0000;
+    u8 *end = (u8 *)0x000fffff;
+    while (p < end) {
+      u64 sig = *(u64*) p;
+      if (sig == 0x2052545020445352) {
+        cprint(c, "acpi: found rsdp.\n");
+        u8 sum = 0;
+        for (int i = 0; i < 20; ++i) {
+          sum += p[i];
+        }
+        if (sum) {
+          p += 16;
+          continue;
+        }
+        char oem[7];
+        mmove(oem, p+9, 6);
+        oem[6] = '\0';
+        cprint(c, oem), cputc(c,'\n');
+        u8 revision = p[15];
+        if (revision == 0) {
+          cprint(c, "acpi: version 1\n");
+          u32 rsdtaddr = *(u32 *)(p + 16);
+          {
+            u32* p = (u32*)rsdtaddr;
+            u32 apichdr = *p++;
+            u32* end = (u32*)((u8*)rsdtaddr + (apichdr >> 8));
+            while (p < end) {
+              u32 address = *p++;
+              {
+                //if (signature == 0x50434146) {
+
+                //} else if (signature == 0x43495041){
+
+                //}
+              }
+            }
+          }
+        } else if (revision == 2) {
+          cprint(c, "acpi: version 2\n");
+        } else {
+
+        }
+
+        break;
+      }
+      p += 16;
+    }
+  }
+
+
   ahcipciinit(0, c, 0, 4);
-  for(;;) {}
-  // u8* buf = arenapusharray(a, 512, u8);
-  // ahcireadblocking(dev, 0, 1, (u64)buf);
-  // if ((buf[510] == 0x55) && buf[511] == 0xAA) {
-  // cprint(c, "Success!\n");
-  // }
-  // &
+  // for(;;) {}
 
   // for (;;) {}
   // detect cpu features, eventually we want to enable features we find as we go along

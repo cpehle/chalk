@@ -2,6 +2,8 @@
    designated as the entry point. */
 ENTRY(_start)
 
+mboot_load_address = 1M;
+
 /* Tell where the various sections of the object files will be put in the final
    kernel image. */
 SECTIONS
@@ -10,14 +12,15 @@ SECTIONS
        loaded at by the bootloader. */
     . = 1M;
 
+    PROVIDE(begin = .);
     /* First put the multiboot header, as it is required to be put very early
        early in the image or the bootloader won't recognize the file format.
        Next we'll put the .text section. */
-    .text BLOCK(4K) : ALIGN(4K)
-    {
+    .text : AT(mboot_load_address) {
         *(.multiboot)
-        *(.text)
+        *(.text .rela.text .stub .text.* .gnu.linkonce.t.*)
     }
+    PROVIDE(etext = .);
 
     /* Read-only data. */
     .rodata BLOCK(4K) : ALIGN(4K)
@@ -25,12 +28,16 @@ SECTIONS
         *(.rodata)
     }
 
+    PROVIDE(data = .);
+
+
     /* Read-write data (initialized) */
     .data BLOCK(4K) : ALIGN(4K)
     {
         *(.data)
     }
-    data_end = .;
+    PROVIDE(edata = .);
+
 
     /* Read-write data (uninitialized) and stack */
     bss_start = .;
@@ -40,12 +47,18 @@ SECTIONS
         *(.bss)
         *(.bootstrap_stack)
         bootstrap_stack_end = .;
-         . += 2M - (bss_start + bootstrap_stack_end);
-         kernel_image.o(.rawdata)
     }
 
+    PROVIDE(end = .);
 
+
+    /DISCARD/ : {
+        *(.eh_frame .rela.eh_frame .note.GNU-stack)
+    }
 
     /* The compiler may produce other sections, by default it will put them in
        a segment with the same name. Simply add stuff here as needed. */
 }
+mboot_load_end = mboot_load_address + (edata - begin);
+mboot_bss_end = mboot_load_address + (end - begin);
+mboot_entry_address = mboot_load_address + (_start - begin);
