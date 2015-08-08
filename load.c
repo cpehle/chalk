@@ -12,6 +12,7 @@
 #include "e1000.h"
 #include "vesa.h"
 #include "vec.h"
+#include "acpi.h"
 #include "graphics.h"
 
 #define X86_MSR_EFER                0xC0000080
@@ -79,8 +80,6 @@ typedef struct {
   u64 sh_addralign;
   u64 sh_entsize;
 } Elf64_Shdr;
-
-
 
 typedef struct {
     u32 flags;			//required
@@ -168,8 +167,9 @@ int longmodeactive() {
 }
 
 extern char* bootstrap_stack_end;
+extern u8* entry64;
 
-int main(u32 magic, u32 mbootinfoaddr) {
+void main(u32 magic, u32 mbootinfoaddr) {
   ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
   Console c = &cd;
   cclear(c, 0xff);
@@ -272,20 +272,28 @@ int main(u32 magic, u32 mbootinfoaddr) {
     cprint(c, "Failed to enable long mode.");
     for(;;);
   }
-
-  // Actually this is not quite true, in fact we need to
-  // do a long jump at some point for it to actually work.
-  // need to find ahci in order to load kernel from disk.
-  // Investigate what GDT entries we really need!
-  // We now need to figure out where the 64bit code is and jump to it.
-
-  // Dummy gdt
   GDTEntry entries[3] = {{0, 0},                    // Null descriptor
-                         {0x00000000, 0xffffffff},  // Code, R/X, Nonconforming
-                         {0x00000000, 0xffffffff}}; // Data, R/W, Expand Down
+                         {0x00000000, 0x00209800},  // Code, R/X, Nonconforming
+                         {0x00000000, 0x00009000}}; // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
+
+  u8 *startup64;
+  __asm__(
+      "	call 1f			\n\t" /* retrieve ip of next instruction */
+      "1:	popl %0 		\n\t" /* save in addr  */
+      : "=r"(startup64));
+  cprintint(c, (u64)startup64, 16, 0);
+  startup64 += 10;
+  for (int i = 0; i < 120; ++i) {
+    cprintint(c, startup64[i], 16, 0);
+  }
+  // for(;;) {};
+
+  #if 1
+
+  // return 0;
 
   // TODO: this is just a test pci traversal.
   pciscan(c);
@@ -310,58 +318,11 @@ int main(u32 magic, u32 mbootinfoaddr) {
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
 
-  // acpi
-  {
-    u8 *p = (u8 *)0x000e0000;
-    u8 *end = (u8 *)0x000fffff;
-    while (p < end) {
-      u64 sig = *(u64*) p;
-      if (sig == 0x2052545020445352) {
-        cprint(c, "acpi: found rsdp.\n");
-        u8 sum = 0;
-        for (int i = 0; i < 20; ++i) {
-          sum += p[i];
-        }
-        if (sum) {
-          p += 16;
-          continue;
-        }
-        char oem[7];
-        mmove(oem, p+9, 6);
-        oem[6] = '\0';
-        cprint(c, oem), cputc(c,'\n');
-        u8 revision = p[15];
-        if (revision == 0) {
-          cprint(c, "acpi: version 1\n");
-          u32 rsdtaddr = *(u32 *)(p + 16);
-          {
-            u32* p = (u32*)rsdtaddr;
-            u32 apichdr = *p++;
-            u32* end = (u32*)((u8*)rsdtaddr + (apichdr >> 8));
-            while (p < end) {
-              u32 address = *p++;
-              {
-                //if (signature == 0x50434146) {
+  AcpiDesc acpi = {};
+  acpiinit(&acpi, c);
+  cprint(c, "acpi: cpucount "),cprintint(c, acpi.cpucount, 16, 0);
 
-                //} else if (signature == 0x43495041){
-
-                //}
-              }
-            }
-          }
-        } else if (revision == 2) {
-          cprint(c, "acpi: version 2\n");
-        } else {
-
-        }
-
-        break;
-      }
-      p += 16;
-    }
-  }
-
-
+  for (;;) {}
   ahcipciinit(0, c, 0, 4);
   // for(;;) {}
 
@@ -392,7 +353,7 @@ int main(u32 magic, u32 mbootinfoaddr) {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
-  // for (;;) {}
+
 
   // graphics only work with bochs emulator
   {
@@ -411,6 +372,9 @@ int main(u32 magic, u32 mbootinfoaddr) {
       // Format is 0x00rrggbb, can use first byte for alpha blending / z-buffering
       framebufferaddr[offset] = 0x00eeeeee;
       }
+    }
+    for (int i = 0; i < 1000000; i += 1920 * 4) {
+      copy(framebufferaddr, (u32*)i, 0, 0, 1920, 1200);
     }
 
     // draw a "line"
@@ -439,6 +403,5 @@ int main(u32 magic, u32 mbootinfoaddr) {
 
   }
   for (;;) {}
-
-  return 0;
+  #endif
 }

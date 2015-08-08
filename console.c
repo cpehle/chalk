@@ -20,6 +20,10 @@ static void movecursor(Console c) {
   c->buf[c->pos + 1] = ' ' | (c->color << 8);
 }
 
+void cnl(Console cons) {
+  cputc(cons, '\n');
+}
+
 void cputc(Console cons, int c) {
   if (c == '\n') {
     cons->pos += 80 - cons->pos % 80;

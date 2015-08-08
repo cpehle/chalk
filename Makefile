@@ -3,19 +3,19 @@ OBJCOPY32:=i686-elf-objcopy
 LD32:=i686-elf-ld
 CC:=x86_64-elf-gcc
 #CC:=clang -target x86_64-elf
-AS:=x86_64-elf-gas
+AS:=x86_64-elf-as
 #CC32:=clang -target i586-elf
 CC32:=i686-elf-gcc
 CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
-CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
+CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common -m64 -mcmodel=kernel
 AS32:=i686-elf-as
 QEMUFLAGS:=-hda chalk.img -enable-kvm -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 -vga std\
 	-cpu Haswell,+avx
 
 QEMU:=qemu-system-x86_64
 
-OBJS := main.o start64.o
-OBJS32 := load.o start.o mem32.o console.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o
+OBJS := main.o start64.o mem.o console.o
+OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o
 
 default: loader.bin kernel.elf chalk.img
 	mkdir -p isodir
@@ -26,6 +26,11 @@ default: loader.bin kernel.elf chalk.img
 	cp grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o kernel.iso isodir
 	$(QEMU) $(QEMUFLAGS) -cdrom kernel.iso
+
+# chalk.img: bootblock kernel.elf
+# 	dd if=/dev/zero of=chalk.img count=10000
+# 	dd if=bootblock of=chalk.img conv=notrunc
+# 	dd if=kernel.elf of=chalk.img seek=1
 
 chalk.img: bootblock loader.bin
 	dd if=/dev/zero of=chalk.img count=10000
@@ -43,8 +48,16 @@ bootblock: boot.s bootmain.c
 loader.bin: $(OBJS32) linker.ld
 	$(CC32) $(CFLAGS32) -T linker.ld -o loader.bin $(OBJS32) -lgcc
 
-kernel.elf: $(OBJS)
-	$(CC) $(CFLAGS)	-T linker64.ld -o kernel.elf $(OBJS) -lgcc
+kernel.elf: $(OBJS) init32.o
+	$(CC) $(CFLAGS)	-T linker64.ld -o kernel.elf $(OBJS) init32.o -lgcc
+
+
+init32.o: init32.c
+	$(CC32) $(CFLAGS32) -c init32.c -o init32.o
+    #
+	objcopy -I elf32-i386  -O  elf64-x86-64 init32.o init32.o
+
+
 
 start64.o: start64.s
 	$(CC) -c start64.s -o start64.o
@@ -52,11 +65,14 @@ start.o: start.s
 	$(AS32) -as start.s -o start.o
 mem32.o: mem.c
 	$(CC32) $(CFLAGS32) -c mem.c -o mem32.o
-console.o: console.c console.h
-	$(CC32) $(CFLAGS32) -c console.c -o console.o
+console32.o: console.c console.h
+	$(CC32) $(CFLAGS32) -c console.c -o console32.o
 vesa.o: vesa.c vesa.h
 	$(CC32) $(CFLAGS32) -c vesa.c -o vesa.o
+
 load.o: load.c
+	$(CC32) $(CFLAGS32) -c $<
+acpi.o: acpi.c acpi.h
 	$(CC32) $(CFLAGS32) -c $<
 pci.o: pci.c pci.h
 	$(CC32) $(CFLAGS32) -c $<
@@ -85,3 +101,4 @@ clean:
 	rm *.o
 	rm *.bin
 	rm *.iso
+	rm *.img

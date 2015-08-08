@@ -1,6 +1,7 @@
 /* The bootloader will look at this image and start execution at the symbol
    designated as the entry point. */
-ENTRY(_start)
+
+ENTRY(mboot_entry)
 
 mboot_load_address = 1M;
 
@@ -11,7 +12,6 @@ SECTIONS
     /* Begin putting sections at 1 MiB, a conventional place for kernels to be
        loaded at by the bootloader. */
     . = 1M;
-
     PROVIDE(begin = .);
     /* First put the multiboot header, as it is required to be put very early
        early in the image or the bootloader won't recognize the file format.
@@ -19,6 +19,11 @@ SECTIONS
     .text : AT(mboot_load_address) {
         *(.multiboot)
         *(.text .rela.text .stub .text.* .gnu.linkonce.t.*)
+        . = ALIGN(1K);
+        *(.init.init32) FILL(0x90909090);
+        . = . + 1K;
+        . = ALIGN(1K);
+        *(.init.init64);
     }
     PROVIDE(etext = .);
 
@@ -61,4 +66,4 @@ SECTIONS
 }
 mboot_load_end = mboot_load_address + (edata - begin);
 mboot_bss_end = mboot_load_address + (end - begin);
-mboot_entry_address = mboot_load_address + (_start - begin);
+mboot_entry_address = mboot_load_address + (mboot_entry - begin);

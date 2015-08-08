@@ -16,7 +16,6 @@ typedef ConsoleDesc *Console;
 
 
 typedef struct ApciDesc {
-  Console c;
   void *localapicaddr;
   void *ioapicaddr;
   const int maxcpucount;

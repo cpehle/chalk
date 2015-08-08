@@ -7,18 +7,18 @@
 #include "pci.h"
 #include "e1000.h"
 
-
 // Transmission commands
-#define CMD_EOP                         (1 << 0)    // End of Packet
-#define CMD_IFCS                        (1 << 1)    // Insert FCS
-#define CMD_IC                          (1 << 2)    // Insert Checksum
-#define CMD_RS                          (1 << 3)    // Report Status
-#define CMD_RPS                         (1 << 4)    // Report Packet Sent
-#define CMD_VLE                         (1 << 6)    // VLAN Packet Enable
-#define CMD_IDE                         (1 << 7)    // Interrupt Delay Enable
+typedef enum {
+  TxCmdEop = 1 << 0, // end of packet
+  TxCmdIfcs = 1 << 1, // insert fcs
+  TxCmdIc = 1 << 2, // insert checksum
+  TxCmdRs = 1 << 3, // report status
+  TxCmdRps = 1 << 4, // report packet send
+  TxCmdVle = 1 << 6, // vlan packet enable
+  TxCmdIde = 1 << 7 // interrupt delay enable
+} TxCmd;
 
-
-enum {
+typedef enum {
   Rctrl = 0x0000, // device control
   Reerd = 0x0014, // eeprom read
   Ricr = 0x00c0,  // Interrupt cause read
@@ -43,7 +43,7 @@ enum {
   Rmta = 0x5200, // multicast table array
   Rral = 0x5400, // receive address low
   Rrah = 0x5404  // receive address high
-};
+} E1000Ctrl;
 
 // Receive control register bits
 enum {
@@ -130,6 +130,13 @@ typedef struct Ethbufdesc {
 typedef Ethbufdesc* Ethbuf;
 
 
+static void e1000receive(Ethdev dev, Ethbuf buf) {
+  RecvDesc *r;
+  u8* mmio;
+  r->addr = buf->start;
+  r->len = buf->end - buf->start;
+}
+
 static void e1000send(Ethdev dev, Ethbuf buf) {
   TransDesc *t;
   u8* mmio;
@@ -138,7 +145,7 @@ static void e1000send(Ethdev dev, Ethbuf buf) {
   }
   t->addr = buf->start;
   t->len  = buf->end - buf->start;
-  t->cmd  = CMD_EOP | CMD_IFCS | CMD_RS;
+  t->cmd  = TxCmdEop | TxCmdIfcs | TxCmdRs;
   t->status = 0;
   dev->txwrite = (dev->txwrite + 1) & (dev->txdesccount - 1);
   mmiowrite32(dev->mmioaddr + Rtdt, dev->txwrite);

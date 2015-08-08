@@ -20,6 +20,15 @@ u32* renderglyphs(Arena *a) {
         return buf;
 }
 
+void copy(u32* dst, u32* src, int x, int y, int width, int height) {
+        for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                        dst[(y+i)*1920 + (x+j)] = src[(width* i) + j];
+                }
+        }
+
+}
+
 void copyrect(u32* dst, u32* src, int x, int y, int idx) {
         for (int i = 0; i < FONT_HEIGHT; i++) {
                 for (int j = 0; j < FONT_WIDTH; j++) {

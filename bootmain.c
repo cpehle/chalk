@@ -40,7 +40,7 @@ bootmain(void)
 
   x = (u32*) 0x10000; // scratch space
   outw(0x3D4,0x200A);
-  bootclrscr(0x0f);
+  bootclrscr(0xee);
   // multiboot header must be in the first 8192 bytes
   readseg((u8*)x, 8192, 0);
 
@@ -54,7 +54,7 @@ bootmain(void)
   return;
 
 found_it:
-  bootclrscr(0xee);
+  bootclrscr(0x00);
   hdr = (struct mbheader *) (x + n);
 
   if (!(hdr->flags & 0x10000))
