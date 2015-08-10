@@ -225,7 +225,7 @@ void acpiinit(Acpi a, Console c) {
     u64 signature = *(u64 *)p;
     if (signature == 0x2052545020445352) // 'RSD PTR '
     {
-      cprint(c, "acpi: Found rsdp at "), cprintint(c, (u32)p, 16, 0);
+      cprint(c, "acpi: Found rsdp at "), cprintint(c, (u32)p, 16, 0), cnl(c);
       if (acpiparsersdp(a, p)) {
         break;
       }

@@ -45,11 +45,11 @@ inline void* arenapushsize_(Arena *a, size_t sizeInit, size_t alignment)
 {
     size_t size = sizeInit;
 
-    size_t AlignmentOffset = arenagetalignementoffset(a, alignment);
-    size += AlignmentOffset;
+    size_t alignmentoffset = arenagetalignementoffset(a, alignment);
+    size += alignmentoffset;
 
     // Assert((a->used + size) <= a->size);
-    void *res = a->base + a->used + AlignmentOffset;
+    void *res = a->base + a->used + alignmentoffset;
     a->used += size;
 
     // Assert(size >= sizeInit);
@@ -87,10 +87,10 @@ checkarena(Arena *Arena)
 }
 
 inline void
-subarena(Arena *res, Arena *a, size_t size, size_t Alignment)
+subarena(Arena *res, Arena *a, size_t size, size_t alignment)
 {
     res->size = size;
-    res->base = (u8 *)arenapushsize_(a, size, Alignment);
+    res->base = (u8 *)arenapushsize_(a, size, alignment);
     res->used = 0;
     res->temp_count = 0;
 }

@@ -289,8 +289,10 @@ void main(u32 magic, u32 mbootinfoaddr) {
   for (int i = 0; i < 120; ++i) {
     cprintint(c, startup64[i], 16, 0);
   }
-  // for(;;) {};
+  load(c);
+}
 
+void load(Console c) {
   #if 1
 
   // return 0;
@@ -302,11 +304,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
     PciConf eth = pciconfread(0, 3);
     e1000init(0, &eth, c);
   }
-  //
 
-  // Random arena code.
-  // TODO: Need to write proper tests!
-  Arena *a;
+  Arena* a;
   arenainit(a, 4000000, (void *)0x1000000);
   int *x = arenapusharray(a, 1000, int);
   int *y = arenapusharray(a, 1000, int);
@@ -320,14 +319,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
 
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
-  cprint(c, "acpi: cpucount "),cprintint(c, acpi.cpucount, 16, 0);
-
-  for (;;) {}
+  cprint(c, "acpi: cpucount "), cprintint(c, acpi.cpucount, 16, 0), cnl(c);
   ahcipciinit(0, c, 0, 4);
-  // for(;;) {}
-
-  // for (;;) {}
-  // detect cpu features, eventually we want to enable features we find as we go along
   cpudetect(c);
 
   // random vector code, need to write proper tests.
@@ -355,6 +348,7 @@ void main(u32 magic, u32 mbootinfoaddr) {
   }
 
 
+  for (;;) {}
   // graphics only work with bochs emulator
   {
     u32 *framebufferaddr;

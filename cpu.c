@@ -123,11 +123,16 @@ void cpudetect(Console c)
         if (ecx & ECX_SSSE3)    cprint(c, " SSSE3");
         if (ecx & ECX_SSE41)    cprint(c, " SSE41");
         if (ecx & ECX_SSE42)    cprint(c, " SSE42");
+        if (exc & ECX_VMX)      cprint(c, " VMX");
         if (ecx & ECX_AVX)      cprint(c, " AVX");
         if (ecx & ECX_F16C)     cprint(c, " F16C");
         if (ecx & ECX_RDRAND)   cprint(c, " RDRAND");
 
         cprint(c, "\n");
+    }
+
+    if (largestStandardFunc >= 11) {
+
     }
 
     // Extended Function 0x00 - Largest Extended Function
