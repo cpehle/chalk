@@ -11,8 +11,8 @@ typedef struct ConsoleDesc {
   unsigned short pos;
   unsigned char color;
   unsigned short *buf;
-} ConsoleDesc;
-typedef ConsoleDesc *Console;
+} ConsoleDesc, *Console;
+
 
 
 typedef struct ApciDesc {
@@ -21,8 +21,7 @@ typedef struct ApciDesc {
   const int maxcpucount;
   int cpucount;
   int cpuids[];
-} AcpiDesc;
-typedef AcpiDesc *Acpi;
+} AcpiDesc, *Acpi;
 
 
 

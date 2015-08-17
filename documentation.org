@@ -1,0 +1,11 @@
+
+* Document Renderer
+
+Able to render in arbitrary 2d clipmask, support for arbitrary shaders
+to combine results.
+
+Multiple "agents" to render page, can be nested and scheduled separately.
+
+
+
+

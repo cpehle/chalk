@@ -15,7 +15,7 @@ QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,
 QEMU:=qemu-system-x86_64
 
 #OBJS := main.o start64.o mem.o console.o
-OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o
+OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o
 
 default: loader.bin chalk.img
 	# mkdir -p isodir
@@ -77,6 +77,9 @@ pci.o: pci.c pci.h
 	$(CC32) $(CFLAGS32) -c $<
 ahci.o: ahci.c ahci.h
 	$(CC32) $(CFLAGS32) -c $<
+relptr.o: relptr.c relptr.h	u.h
+	$(CC32) $(CFLAGS32) -c $<
+
 e1000.o: e1000.c e1000.h
 	$(CC32) $(CFLAGS32) -c $<
 arena.o: arena.c arena.h

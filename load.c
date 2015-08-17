@@ -1,4 +1,5 @@
 #include "u.h"
+#include "io.h"
 #include "dat.h"
 #include "mem.h"
 #include "console.h"
@@ -174,6 +175,7 @@ void main(u32 magic, u32 mbootinfoaddr) {
   Console c = &cd;
   cclear(c, 0xff);
   cprint(c, bootmsg);
+
 #if 0
   if (magic != 0x2BADB002) {
     cprint(c, "boot: invalid boot magic.\n");
@@ -192,7 +194,7 @@ void main(u32 magic, u32 mbootinfoaddr) {
   // bootstrap page tables here. We will map the first 4 gigabytes,
   // this is rather careless if there isn't actually that much memory
   // in the machine.
-  mset((void *)0x1000, 0, 6000);
+  // mset((void *)0x1000, 0, 6000);
   u64 *p4ml = (u64 *)(0x1000);
   u64 *pdpt = (u64 *)(0x2000);
   u64 *pd[4] = {(u64 *)(0x3000), (u64 *)0x4000, (u64 *)0x5000, (u64 *)0x6000};
@@ -208,6 +210,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
       pde += 0x200000;
     }
   }
+
+
 #if 0
   {
     Elf64_Ehdr *hdr = 0;
@@ -260,9 +264,11 @@ void main(u32 magic, u32 mbootinfoaddr) {
     }
   }
 #endif
-  // that doesn't really work though...
-  // We should check support for long mode via cpu id here!
-  // This sequence to enable long mode is documented in the AMD Manual for example.
+
+
+
+  // This sequence to enable long mode is documented in the AMD Manual
+  // for example.
   disablepaging();
   enablepaemode();
   enablelongmode();
@@ -272,39 +278,44 @@ void main(u32 magic, u32 mbootinfoaddr) {
     cprint(c, "Failed to enable long mode.");
     for(;;);
   }
-  GDTEntry entries[3] = {{0, 0},                    // Null descriptor
-                         {0x00000000, 0x00209800},  // Code, R/X, Nonconforming
-                         {0x00000000, 0x00009000}}; // Data, R/W, Expand Down
+  GDTEntry entries[3] = {{0, 0},                       // Null descriptor
+                         {0x00000000, 0x00209800},   // Code, R/X, Nonconforming
+                         {0x00000000, 0x00009000}};  // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
+
 
   u8 *startup64;
   __asm__(
       "	call 1f			\n\t" /* retrieve ip of next instruction */
       "1:	popl %0 		\n\t" /* save in addr  */
       : "=r"(startup64));
-  cprintint(c, (u64)startup64, 16, 0);
-  startup64 += 10;
-  for (int i = 0; i < 120; ++i) {
-    cprintint(c, startup64[i], 16, 0);
-  }
   load(c);
 }
+
+
 
 void load(Console c) {
   #if 1
 
-  // return 0;
+  {
+    outb(0x21, 0xff); // Mask interrupts on PIC1 and PIC2
+    outb(0xa1, 0xff);
+  }
 
-  // TODO: this is just a test pci traversal.
-  pciscan(c);
+
+
+  pciscan(c); // This is to test pci traversal.
+
   // Ethernet
   {
     PciConf eth = pciconfread(0, 3);
     e1000init(0, &eth, c);
   }
 
+  // Instead of a proper memory allocator we just allocate permanently
+  // from one large Arena.
   Arena* a;
   arenainit(a, 4000000, (void *)0x1000000);
   int *x = arenapusharray(a, 1000, int);
@@ -319,10 +330,13 @@ void load(Console c) {
 
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
-  cprint(c, "acpi: cpucount "), cprintint(c, acpi.cpucount, 16, 0), cnl(c);
+
+  // Ahci code doesn't really work yet.
   ahcipciinit(0, c, 0, 4);
+  // Eventually we want to enable all CPU features found by the scan.
   cpudetect(c);
 
+  u64 t = rdtsc();
   // random vector code, need to write proper tests.
   {
     M44 m = (M44){1,1,0,0,
@@ -346,10 +360,12 @@ void load(Console c) {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
+  cprintint(c, rdtsc()-t, 16, 0);
+
 
 
   for (;;) {}
-  // graphics only work with bochs emulator
+  // Graphics only work with bochs emulator
   {
     u32 *framebufferaddr;
     {

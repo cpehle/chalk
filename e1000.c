@@ -5,6 +5,7 @@
 #include "dat.h"
 #include "console.h"
 #include "pci.h"
+#include "relptr.h"
 #include "e1000.h"
 
 // Transmission commands
@@ -163,6 +164,8 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   ethdev.mmioaddr = mmio;
   cprintint(cons, (u32)mmio, 16, 0);
 
+  RelativePointer rctrl = { .base = mmio, .offset = Rctrl};
+  RelativePointer rdbal = { mmio, Rrdbal};
 
   u8 mac[6] = {};
   // TODO: Should determine number of receive and transmission registers.
