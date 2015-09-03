@@ -20,31 +20,30 @@ typedef enum {
 } TxCmd;
 
 typedef enum {
-  Rctrl = 0x0000, // device control
-  Reerd = 0x0014, // eeprom read
-  Ricr = 0x00c0,  // Interrupt cause read
-  Rims = 0x00d0,  // Interrupt mask set/read
+  Ctrl = 0x0000 >> 2, // device control
+  Eerd = 0x0014 >> 2, // eeprom read
+  Icr = 0x00c0 >> 2,  // Interrupt cause read
+  Ims = 0x00d0 >> 2,  // Interrupt mask set/read
+  Rctl = 0x0100 >> 2, // receive control
+  Tctl = 0x0400 >> 2, // transmit control
 
-  Rrctl = 0x0100, // receive control
-  Rtctl = 0x0400, // transmit control
+  Rdbal = 0x2800 >> 2, // receive descriptor base low
+  Rdbah = 0x2804 >> 2, // receive descriptor base high
+  Rdlen = 0x2808 >> 2, // receive descriptor length
+  Rdh   = 0x2810 >> 2, // receive descriptor head
+  Rdt   = 0x2818 >> 2, // receive descriptor tail
 
-  Rrdbal = 0x2800, // receive descriptor base low
-  Rrdbah = 0x2804, // receive descriptor base high
-  Rrdlen = 0x2808, // receive descriptor length
-  Rrdh   = 0x2810, // receive descriptor head
-  Rrdt   = 0x2818, // receive descriptor tail
-
-  Rtdbal = 0x3800, // transmit descriptor base low
-  Rtdbah = 0x3804, // transmit descriptor base high
-  Rtdlen = 0x3808, // transmit descriptor length
-  Rtdh   = 0x3810, // transmit descriptor head
-  Rtdt   = 0x3818, // transmit descriptor tail
+  Tdbal = 0x3800 >> 2, // transmit descriptor base low
+  Tdbah = 0x3804 >> 2, // transmit descriptor base high
+  Tdlen = 0x3808 >> 2, // transmit descriptor length
+  Tdh   = 0x3810 >> 2, // transmit descriptor head
+  Tdt   = 0x3818 >> 2, // transmit descriptor tail
 
 
-  Rmta = 0x5200, // multicast table array
-  Rral = 0x5400, // receive address low
-  Rrah = 0x5404  // receive address high
-} E1000Ctrl;
+  Mta = 0x5200 >> 2, // multicast table array
+  Ral = 0x5400 >> 2, // receive address low
+  Rah = 0x5404 >> 2  // receive address high
+} E1000Register;
 
 // Receive control register bits
 enum {
@@ -149,7 +148,7 @@ static void e1000send(Ethdev dev, Ethbuf buf) {
   t->cmd  = TxCmdEop | TxCmdIfcs | TxCmdRs;
   t->status = 0;
   dev->txwrite = (dev->txwrite + 1) & (dev->txdesccount - 1);
-  mmiowrite32(dev->mmioaddr + Rtdt, dev->txwrite);
+  mmiowrite32(dev->mmioaddr + Tdt, dev->txwrite);
 }
 
 
@@ -164,16 +163,16 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   ethdev.mmioaddr = mmio;
   cprintint(cons, (u32)mmio, 16, 0);
 
-  RelativePointer rctrl = { .base = mmio, .offset = Rctrl};
-  RelativePointer rdbal = { mmio, Rrdbal};
+  RelativePointer rctrl = { .base = mmio, .offset = Ctrl};
+  RelativePointer rdbal = { mmio, Rdbal};
 
   u8 mac[6] = {};
   // TODO: Should determine number of receive and transmission registers.
   const int Ntx = 32, Nrx = 8;
   ethdev.txdesccount = Ntx;
-  u32 ral = mmio[Rral/4];
+  u32 ral = mmio[Ral];
   if (ral) {
-    u32 rah = mmio[Rrah/4];
+    u32 rah = mmio[Rah];
     mac[0] = (u8)ral;
     mac[1] = (u8)(ral >> 8);
     mac[2] = (u8)(ral >> 16);
@@ -189,34 +188,33 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
         (i == 5) ? cputc(cons, '\n') : cputc(cons, ':');
   }
 
-  mmio[Rctrl / 4] |= CtrlSLU;  // set link up
-  mset(mmio + Rmta/4, 0, 4 * 128); // clear multicast table
-  mmioread32(mmio + Ricr/4); // clear all interrupts
+  mmio[Ctrl] |= CtrlSLU;  // set link up
+  mset(mmio + Mta, 0, 4 * 128); // clear multicast table
 
   RecvDesc *rx = arenapusharray(a, Nrx, RecvDesc);
+  TransDesc *tx = arenapusharray(a, Ntx, TransDesc);
   for (int i = 0; i < Nrx; ++i) {
     rx[i].addr = (u64)arenapusharray(a, 2048, u8);
     rx[i].status = 0;
   }
-  mmio[Rrdbal / 4] = (u64)rx;
-  mmio[Rrdbah / 4] = (u64)rx >> 32;
-  mmio[Rrdlen / 4] = Nrx * sizeof(RecvDesc);
-  mmio[Rrdh / 4] = 0;
-  mmio[Rrdt / 4] = Nrx - 1;
-  mmio[Rrctl / 4] = Rctl_EN | Rctl_SBP | Rctl_UPE | Rctl_MPE | Rctl_LBM_NONE |
+  mmio[Rdbal] = (u64)rx;
+  mmio[Rdbah] = (u64)rx >> 32;
+  mmio[Rdlen] = Nrx * sizeof(RecvDesc);
+  mmio[Rdh] = 0;
+  mmio[Rdt] = Nrx - 1;
+  mmio[Rctl] = Rctl_EN | Rctl_SBP | Rctl_UPE | Rctl_MPE | Rctl_LBM_NONE |
                      RTCL_RDMTS_HALF | Rctl_BAM | Rctl_SECRC | Rctl_BSIZE_2048;
 
-  TransDesc *tx = arenapusharray(a, Ntx, TransDesc);
   mset(tx,0,Ntx*sizeof(TransDesc));
   for (int i = 0; i<Ntx; ++i) {
     tx[i].status = (1<<0); // mark descriptor complete
   }
-  mmio[Rtdbal / 4] = (u64)tx;
-  mmio[Rtdbah / 4] = (u64)tx >> 32;
-  mmio[Rtdlen / 4] = Ntx * sizeof(TransDesc);
-  mmio[Rtdh / 4] = 0;
-  mmio[Rtdt / 4] = 0;
-  mmio[Rtctl / 4] = Tctl_EN | Tctl_PSP | (15 < Tctl_CT_SHIFT) | (64 << Tctl_COLD_SHIFT) | Tctl_RTLC;
+  mmio[Tdbal] = (u64)tx;
+  mmio[Tdbah] = (u64)tx >> 32;
+  mmio[Tdlen] = Ntx * sizeof(TransDesc);
+  mmio[Tdh] = 0;
+  mmio[Tdt] = Ntx-1;
+  mmio[Tctl] = Tctl_EN | Tctl_PSP | (15 < Tctl_CT_SHIFT) | (64 << Tctl_COLD_SHIFT) | Tctl_RTLC;
 
 
   return;

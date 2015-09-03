@@ -46,6 +46,12 @@ void cprint(Console c, const char *str) {
   }
 }
 
+void cprintpairs(Console c, Pair* p, int count) {
+  for (int i = 0; i < count; ++i) {
+    cprint(c, p[i].key), cprint(c, ": "), cprintint(c, p[i].value, 16, 0),  cprint(c, ", ");
+  }
+}
+
 void cprintint(Console c, int xx, int base, int sign) {
   char buf[16];
   int i;

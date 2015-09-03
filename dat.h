@@ -15,6 +15,11 @@ typedef struct ConsoleDesc {
 
 
 
+typedef struct {
+  char  key[64];
+  u64   value;
+} Pair;
+
 typedef struct ApciDesc {
   void *localapicaddr;
   void *ioapicaddr;

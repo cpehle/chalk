@@ -9,4 +9,9 @@ typedef short s16;
 typedef char s8;
 
 
+typedef float r32;
+typedef double r64;
+
+
+
 typedef u32 size_t;

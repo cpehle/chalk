@@ -9,13 +9,16 @@ CC32:=i686-elf-gcc
 CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
 CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common -m64 -mcmodel=kernel
 AS32:=i686-elf-as
-QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 -vga std\
+QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 \
+   -drive file=chalknvme.img,if=none,id=D22 \
+   -device nvme,drive=D22,serial=1234 \
+-vga std\
 	-cpu Haswell,+avx,+vmx
 
 QEMU:=qemu-system-x86_64
 
 #OBJS := main.o start64.o mem.o console.o
-OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o
+OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o nvme.o
 
 default: loader.bin chalk.img
 	# mkdir -p isodir
@@ -74,6 +77,8 @@ load.o: load.c
 acpi.o: acpi.c acpi.h
 	$(CC32) $(CFLAGS32) -c $<
 pci.o: pci.c pci.h
+	$(CC32) $(CFLAGS32) -c $<
+nvme.o: nvme.c nvme.h
 	$(CC32) $(CFLAGS32) -c $<
 ahci.o: ahci.c ahci.h
 	$(CC32) $(CFLAGS32) -c $<
