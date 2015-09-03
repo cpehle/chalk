@@ -6,8 +6,10 @@
 #include "console.h"
 #include "mem.h"
 
+#define BITEXTRACT(c,x,y) ((c & (((1 << x) - 1) << y)) >> y)
+
 typedef struct {
-  u64 commandlistbase;
+  u64 commandlistbaseaddress;
   u64 frameinfobase;
   u32 interruptstatus;
   u32 interruptenable;
@@ -28,7 +30,7 @@ typedef struct {
 
 typedef struct  {
   u32 capabilities;
-  u32 globalcontrol;
+  u32 globalhostcontrol;
   u32 interruptstatus;
   u32 portsimplemented;
   u32 version;
@@ -42,7 +44,7 @@ typedef struct  {
   u32 _nvmchi[16];
   u32 _vendor[24];
   Ahciport port[32];
-} __attribute__((packed)) Ahcighc;
+} __attribute__((packed)) Ahcihostbusadapter;
 
 typedef struct {
   u16 command;
@@ -50,7 +52,7 @@ typedef struct {
   u32 prdtbytes;
   u64 commandtablebase;
   u8  _r0[16];
-} __attribute__((packed)) Ahcicmd;
+} __attribute__((packed)) Ahcicommand;
 
 typedef volatile struct {
     u8 fis[64];
@@ -61,7 +63,7 @@ typedef volatile struct {
         u32 _reserved0;
         u32 flags;
     } prdt[65535];
-} __attribute__((packed)) Ahcicmdtable;
+} __attribute__((packed)) Ahcicommandtable;
 
 typedef volatile struct {
     u8 dmasetupfis[28];
@@ -73,14 +75,22 @@ typedef volatile struct {
     u8 setdevicebitsfis[8];
     u8 unknownfis[64];
     u8 _r3[96];
-} __attribute__((packed)) Ahcircvdfis;
+} __attribute__((packed)) Ahcireceivedfis;
 
 
-typedef struct Ahcidev {
+typedef struct Ahcidevice {
   Ahciport * port;
-  Ahcicmd * commandlist;
-  Ahcicmdtable * commandtable;
-} Ahcidev;
+  Ahcicommand * commandlist;
+  Ahcicommandtable * commandtable;
+} Ahcidevice;
+
+
+static void ahcisetuptransfer() {
+
+
+
+}
+
 
 static inline u32 _ahciclearstatus(volatile u32 *const reg)
 {
@@ -107,12 +117,13 @@ int ahcistopcommandengine(Ahciport *const p) {
   int timeout = 1000;
   p->commandstatus &= ~(1 << 0);
   while ((p->commandstatus & (1 << 15)) && timeout--) {
+
   }
   if (timeout < 0) {
     return 1;
   }
   p->commandstatus &= ~(1 << 4);
-  timeout = 1000;
+  timeout = 10000;
   while ((p->commandstatus & (1 << 4)) && timeout--) {
   }
   if (timeout < 0) {
@@ -121,7 +132,7 @@ int ahcistopcommandengine(Ahciport *const p) {
   return 0;
 }
 
-void ahcicommandslotprepare(Ahcidev *const d) {
+void ahcicommandslotprepare(Ahcidevice *const d) {
   const int BYTES_PER_PRD = 512;
   int buf_len = 13;
   int length = 0;
@@ -143,14 +154,14 @@ void ahcicommandslotprepare(Ahcidev *const d) {
   }
 }
 
-void ahcicommandslotexecute(Ahcidev *const d) {
+void ahcicommandslotexecute(Ahcidevice *const d) {
 
 }
 
-void ahciidentifydevice(Ahcidev *const d) {
+void ahciidentifydevice(Ahcidevice *const d) {
   int i = 0;
   ahcicommandslotprepare(d);
-  mset(&d->commandtable[i], 0, sizeof(Ahcicmdtable));
+  mset(&d->commandtable[i], 0, sizeof(Ahcicommandtable));
   d->commandtable[i].fis[0] = 0x27; // Fis Host to Device
   d->commandtable[i].fis[1] = 0x80; // Host to Device Command
   d->commandtable[i].fis[2] = 0;
@@ -169,25 +180,66 @@ static inline int ahciportisactive(const Ahciport *const port)
 // ahcipciinit -- Initialize a SATA controller and the devices attached to it
 void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   PciConf conf = pciconfread(bus, slot);
+  u32 portcount;
+  u32 commandslotcount;
+  volatile u32 reg;
+
   if (conf.class_code != 0x01 ||
       conf.subclass != 0x06) {
     return;
   }
   cprint(c, "pci: found SATA controller.\n");
-  Ahcighc* const g = conf.dev.base_address_register[5].address;
-  g->globalcontrol |= (1 << 0); // HBA_GHC_RESET
-  for (int i = 0; i < 10; ++i) { cputc(c, '.');}
-  if (!(g->globalcontrol & (1 << 0))) {
-    return;
+  // The address of the AHCI Host Bus Adapter is located at the base address register 5.
+  volatile Ahcihostbusadapter* const h = conf.dev.base_address_register[5].address;
+
+  {
+    if (h->extendedcapabilities & (1 << 0)) {
+      if (!(h->handoffcontrolstatus & (1 << 0))) {
+        cprint(c, "ahci: AHCI is owned by the BIOS, will try to obtain control.\n");
+      } else {
+        cprint(c, "ahci: AHCI is owned by us.\n");
+      }
+    }
   }
-  cputc(c, '\n');
-  g->globalcontrol |= (1<<31); // HBA_GHC_AHCI_ENABLE
+
+
+
+
+
+  #if 0
+  // Reset HBA
+  {
+    h->globalhostcontrol |= (1 << 0); // HBA_GHC_RESET
+    // TODO: We need some timeout mechanism instead.
+    for (int i = 0; i < 100; ++i) { cputc(c, '.');}
+    if (!(h->globalhostcontrol & (1 << 0))) {
+      cprint(c, "ahci: Failed to reset HBA.\n");
+      return;
+    }
+  }
+  #endif
+
+  !(h->capabilities & (1 << 18)) ? h->globalhostcontrol |= (1<<31) : 0; // HBA_GHC_AHCI_ENABLE
+  reg = h->globalhostcontrol;
+  if (!(reg & (1<<31))) { return; }
+
+  reg = h->capabilities;
+  {
+
+    commandslotcount = BITEXTRACT(reg,5,8);
+    portcount = BITEXTRACT(reg,5,0);
+    Pair p[] = {{"command slot count", commandslotcount},
+                {"portcount", portcount}};
+    cprint(c, "ahci: "), cprintpairs(c, p, 2), cnl(c);
+  }
+
+
   for (int i = 0; i < 32; ++i) {
-    if (!(g->portsimplemented & (1 << i))) {
+    if (!(h->portsimplemented & (1 << i))) {
       continue;
     } else {
-      Ahciport* const p = &g->port[i];
-      if (g->capabilities & (1 << 27)) { // SSS -- Staggered spinup supported
+      Ahciport* const p = &h->port[i];
+      if (h->capabilities & (1 << 27)) { // SSS -- Staggered spinup supported
         p->commandstatus |= (1 << 1); // Spin up device
       }
 
@@ -195,20 +247,20 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       ahciclearstatus(p, interruptstatus);
 
       const int ncs = 20;
-      Ahcidev *const dev = arenapushstruct(m, Ahcidev);
-      Ahcicmd *const cl = arenapusharrayalign(m, ncs, Ahcicmd, 1024);
-      Ahcicmdtable *const t = arenapusharrayalign(m, ncs, Ahcicmdtable, 128);
-      Ahcircvdfis *const rf = arenapushstructalign(m, Ahcircvdfis, 256);
-      dev->port = p;
-      dev->commandlist = cl;
-      dev->commandtable = t;
+      Ahcidevice *const d = arenapushstruct(m, Ahcidevice);
+      Ahcicommand *const cl = arenapusharrayalign(m, ncs, Ahcicommand, 1024);
+      Ahcicommandtable *const t = arenapusharrayalign(m, ncs, Ahcicommandtable, 128);
+      Ahcireceivedfis *const rf = arenapushstructalign(m, Ahcireceivedfis, 256);
+      d->port = p;
+      d->commandlist = cl;
+      d->commandtable = t;
 
 
       if (ahcistopcommandengine(p)) {
         cprint(c, "ahci: failed to stop command engine.");
         continue;
       }
-      p->commandlistbase = (u64)cl;
+      p->commandlistbaseaddress = (u64)cl;
       p->frameinfobase = (u64)rf;
       if (ahcistartcommandengine(p)) {
         cprint(c, "ahci: failed to start command engine.");

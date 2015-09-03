@@ -264,9 +264,6 @@ void main(u32 magic, u32 mbootinfoaddr) {
     }
   }
 #endif
-
-
-
   // This sequence to enable long mode is documented in the AMD Manual
   // for example.
   disablepaging();
@@ -299,12 +296,11 @@ void main(u32 magic, u32 mbootinfoaddr) {
 void load(Console c) {
   #if 1
 
+  // Mask interrupts on PIC1 and PIC2
   {
-    outb(0x21, 0xff); // Mask interrupts on PIC1 and PIC2
+    outb(0x21, 0xff);
     outb(0xa1, 0xff);
   }
-
-
 
   pciscan(c); // This is to test pci traversal.
 
@@ -328,11 +324,16 @@ void load(Console c) {
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
 
+  /*
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
+  */
 
+  //nvmepciinit(a, c, 0, 5);
+  //for (;;) {}
   // Ahci code doesn't really work yet.
-  ahcipciinit(0, c, 0, 4);
+  ahcipciinit(a, c, 0, 4);
+  for (;;) {}
   // Eventually we want to enable all CPU features found by the scan.
   cpudetect(c);
 
@@ -364,7 +365,7 @@ void load(Console c) {
 
 
 
-  for (;;) {}
+  //for (;;) {}
   // Graphics only work with bochs emulator
   {
     u32 *framebufferaddr;
@@ -383,9 +384,7 @@ void load(Console c) {
       framebufferaddr[offset] = 0x00eeeeee;
       }
     }
-    for (int i = 0; i < 1000000; i += 1920 * 4) {
-      copy(framebufferaddr, (u32*)i, 0, 0, 1920, 1200);
-    }
+
 
     // draw a "line"
     for (int i = 0; i < 1920; ++i) {

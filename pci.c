@@ -143,11 +143,11 @@ void pciscan(Console c) {
         continue;
       }
       cprint(c, "pci(bus,dev): ("), cprintint(c, bus, 16, 0), cputc(c, ','),
-          cprintint(c, dev, 16, 0), cputc(c, ')'), cputc(c, '\n');
+        cprintint(c, dev, 16, 0), cputc(c, ')'), cnl(c);
       cprint(c, "device id: "), cprintint(c, conf.device_id, 16, 0),
-          cputc(c, '\n');
+          cnl(c);
       cprint(c, "vendor id: "), cprintint(c, conf.vendor_id, 16, 0),
-          cputc(c, '\n');
+        cnl(c);
       for (int i = 0; i < 6; ++i) {
         u64 size = conf.dev.base_address_register[i].size;
         if (size) {
@@ -176,7 +176,7 @@ void pciscan(Console c) {
           cprintint(c, conf.dev.base_address_register[i].size, 16, 0);
         }
       }
-      cputc(c, '\n');
+      cnl(c);
     }
   }
 }
