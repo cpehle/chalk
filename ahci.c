@@ -202,10 +202,6 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
     }
   }
 
-
-
-
-
   #if 0
   // Reset HBA
   {
@@ -225,9 +221,8 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
 
   reg = h->capabilities;
   {
-
-    commandslotcount = BITEXTRACT(reg,5,8);
-    portcount = BITEXTRACT(reg,5,0);
+    commandslotcount = BITEXTRACT(reg,5,8) + 1;
+    portcount = BITEXTRACT(reg,5,0) + 1;
     Pair p[] = {{"command slot count", commandslotcount},
                 {"portcount", portcount}};
     cprint(c, "ahci: "), cprintpairs(c, p, 2), cnl(c);
@@ -254,7 +249,6 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       d->port = p;
       d->commandlist = cl;
       d->commandtable = t;
-
 
       if (ahcistopcommandengine(p)) {
         cprint(c, "ahci: failed to stop command engine.");

@@ -47,8 +47,12 @@ void cprint(Console c, const char *str) {
 }
 
 void cprintpairs(Console c, Pair* p, int count) {
-  for (int i = 0; i < count; ++i) {
-    cprint(c, p[i].key), cprint(c, ": "), cprintint(c, p[i].value, 16, 0),  cprint(c, ", ");
+  if (count > 0) {
+  for (int i = 0; i < count-1; ++i) {
+    cprint(c, p[i].key), cprint(c, ": "), cprintint(c, p[i].value, 10, 0),  cprint(c, ", ");
+  }
+  cprint(c, p[count-1].key), cprint(c, ": "), cprintint(c, p[count-1].value, 10, 0);
+
   }
 }
 

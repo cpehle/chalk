@@ -87,3 +87,4 @@ typedef struct PciConf {
 
 PciConf pciconfread(u8 bus, u8 slot);
 void pciscan(Console c);
+void cprintpciconf(Console c, PciConf conf);

@@ -276,8 +276,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
     for(;;);
   }
   GDTEntry entries[3] = {{0, 0},                       // Null descriptor
-                         {0x00000000, 0x00209800},   // Code, R/X, Nonconforming
-                         {0x00000000, 0x00009000}};  // Data, R/W, Expand Down
+                           {0x00000000, 0x00209800},   // Code, R/X, Nonconforming
+                           {0x00000000, 0x00009000}};  // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
@@ -292,26 +292,29 @@ void main(u32 magic, u32 mbootinfoaddr) {
 }
 
 
+typedef struct {
+  int dummy;
+} PciState;
+
+typedef struct {
+  PciState pci;
+} KernelState;
+
 
 void load(Console c) {
   #if 1
-
-  // Mask interrupts on PIC1 and PIC2
-  {
-    outb(0x21, 0xff);
-    outb(0xa1, 0xff);
-  }
+  KernelState k = {}
 
   pciscan(c); // This is to test pci traversal.
-
   // Ethernet
   {
     PciConf eth = pciconfread(0, 3);
+    cprintpciconf(c, eth);
     e1000init(0, &eth, c);
   }
 
   // Instead of a proper memory allocator we just allocate permanently
-  // from one large Arena.
+  // from one large Arena, this is only a temporary solution.
   Arena* a;
   arenainit(a, 4000000, (void *)0x1000000);
   int *x = arenapusharray(a, 1000, int);
@@ -324,19 +327,17 @@ void load(Console c) {
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
 
-  /*
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
-  */
-
-  //nvmepciinit(a, c, 0, 5);
-  //for (;;) {}
+  {
+    PciConf conf = pciconfread(0,5);
+    cprintpciconf(c, conf);
+    //nvmepciinit(a, c, conf);
+  }
   // Ahci code doesn't really work yet.
   ahcipciinit(a, c, 0, 4);
-  for (;;) {}
-  // Eventually we want to enable all CPU features found by the scan.
+  // Eventually we want to enable all CPU features found during detection.
   cpudetect(c);
-
   u64 t = rdtsc();
   // random vector code, need to write proper tests.
   {
@@ -395,7 +396,6 @@ void load(Console c) {
 
     float t = 0;
     BezierData b = {4,{{50,68,0,0},{70,220,0,0},{80,40,0,0},{90,100,0,0}}};
-
     while (t < 1) {
       V4 v = evcubicbezier(b, t);
       int offset = (u32)(v.v[1]) * 1920 + (u32)(v.v[0]);
@@ -409,7 +409,6 @@ void load(Console c) {
     rendertext(framebufferaddr, buf, "This is a test.", 0, 96);
     rendertext(framebufferaddr, buf, "Hello World.", 8*20, 82);
     rendertext(framebufferaddr, buf, "12 23 45 332", 8*20, 60*16);
-
   }
   for (;;) {}
   #endif

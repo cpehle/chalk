@@ -110,8 +110,8 @@ static void acpiparseapic(Acpi a, AcpiMadt *madt) {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
-static void AcpiParseDT(Acpi a, AcpiHeader *header) {
+
+static void acpiparsedt(Acpi a, AcpiHeader *header) {
   u32 signature = header->signature;
   if (signature == 0x50434146) {
     acpiparsefacp((AcpiFadt *)header);
@@ -120,56 +120,27 @@ static void AcpiParseDT(Acpi a, AcpiHeader *header) {
   }
 }
 
-// ------------------------------------------------------------------------------------------------
 static void acpiparsersdt(Acpi a, AcpiHeader *rsdt) {
   u32 *p = (u32 *)(rsdt + 1);
   u32 *end = (u32 *)((u8 *)rsdt + rsdt->length);
   while (p < end) {
     u32 address = *p++;
-    AcpiParseDT(a, (AcpiHeader *)address);
+    acpiparsedt(a, (AcpiHeader *)address);
   }
 }
 
-// ------------------------------------------------------------------------------------------------
 static void acpiparsexsdt(Acpi a, AcpiHeader *xsdt) {
   u64 *p = (u64 *)(xsdt + 1);
   u64 *end = (u64 *)((u8 *)xsdt + xsdt->length);
-
   while (p < end) {
     u64 address = *p++;
-    AcpiParseDT(a, (AcpiHeader *)address);
+    acpiparsedt(a, (AcpiHeader *)address);
   }
-}
-
-static int acpiparsersdp(Acpi a, u8 *p) {
-  u8 sum = 0;
-  for (int i = 0; i < 20; ++i) {
-    sum += p[i];
-  }
-  if (sum) {
-    return 0;
-  }
-  u8 revision = p[15];
-  if (revision == 0) {
-    u32 rsdtAddr = *(u32 *)(p + 16);
-    acpiparsersdt(a, (AcpiHeader *)rsdtAddr);
-  } else if (revision == 2) {
-    u32 rsdtAddr = *(u32 *)(p + 16);
-    u64 xsdtAddr = *(u64 *)(p + 24);
-    if (xsdtAddr) {
-      acpiparsexsdt(a, (AcpiHeader *)xsdtAddr);
-    } else {
-      acpiparsersdt(a, (AcpiHeader *)rsdtAddr);
-    }
-  } else {
-    return 0; // Unsupported version.
-  }
-  return 1;
 }
 
 void acpiinit(Acpi a, Console c) {
-  //acpi
   {
+    // See 5.2.5.1 and 5.2.5.3
     u8 *p = (u8 *)0x000e0000;
     u8 *end = (u8 *)0x000fffff;
     while (p < end) {
@@ -191,45 +162,22 @@ void acpiinit(Acpi a, Console c) {
         u8 revision = p[15];
         if (revision == 0) {
           cprint(c, "acpi: version 1\n");
-          u32 rsdtaddr = *(u32 *)(p + 16);
-          {
-            u32* p = (u32*)rsdtaddr;
-            u32 apichdr = *p++;
-            u32* end = (u32*)((u8*)rsdtaddr + (apichdr >> 8));
-            while (p < end) {
-              u32 address = *p++;
-              {
-                //if (signature == 0x50434146) {
-
-                //} else if (signature == 0x43495041){
-
-                //}
-              }
-            }
-          }
+          u32 rsdtaddress = *(u32 *)(p + 16);
+          acpiparsersdt(a, (AcpiHeader *)rsdtaddress);
         } else if (revision == 2) {
           cprint(c, "acpi: version 2\n");
+          u32 rsdtaddress = *(u32 *)(p + 16);
+          u64 xsdtaddress = *(u64 *)(p + 24);
+          if (xsdtaddress) {
+            acpiparsexsdt(a, (AcpiHeader *)xsdtaddress);
+          } else {
+            acpiparsersdt(a, (AcpiHeader *)rsdtaddress);
+          }
         } else {
-
         }
-
         break;
       }
       p += 16;
     }
-  }
-  // Search main BIOS area below 1MB
-  u8 *p = (u8 *)0x000e0000;
-  u8 *end = (u8 *)0x000fffff;
-  while (p < end) {
-    u64 signature = *(u64 *)p;
-    if (signature == 0x2052545020445352) // 'RSD PTR '
-    {
-      cprint(c, "acpi: Found rsdp at "), cprintint(c, (u32)p, 16, 0), cnl(c);
-      if (acpiparsersdp(a, p)) {
-        break;
-      }
-    }
-    p += 16;
   }
 }

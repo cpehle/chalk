@@ -180,3 +180,17 @@ void pciscan(Console c) {
     }
   }
 }
+
+void cprintpciconf(Console c, PciConf conf) {
+  Pair data[] = {
+    {"device_id", conf.device_id},
+    {"vendor_id", conf.vendor_id},
+    {"status_reg", conf.status_reg},
+    {"command_reg", conf.command_reg},
+    {"class_code", conf.class_code},
+    {"subclass_code", conf.subclass},
+    {"prog_if", conf.prog_if}
+  };
+  cprintpairs(c, data);
+  return;
+}
