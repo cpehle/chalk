@@ -35,7 +35,7 @@ mboot_entry:
 
     pushl %ebx
     pushl %eax
-    call main
+    call kernelmain
     jmp $0x0008,$entry64
 hang:
     jmp hang

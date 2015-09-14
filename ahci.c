@@ -5,8 +5,28 @@
 #include "arena.h"
 #include "console.h"
 #include "mem.h"
+#include "delay.h"
 
 #define BITEXTRACT(c,x,y) ((c & (((1 << x) - 1) << y)) >> y)
+
+typedef enum
+{
+    FIS_TYPE_REG_H2D	= 0x27,	// Register FIS - host to device
+    FIS_TYPE_REG_D2H	= 0x34,	// Register FIS - device to host
+    FIS_TYPE_DMA_ACT	= 0x39,	// DMA activate FIS - device to host
+    FIS_TYPE_DMA_SETUP	= 0x41,	// DMA setup FIS - bidirectional
+    FIS_TYPE_DATA		= 0x46,	// Data FIS - bidirectional
+    FIS_TYPE_BIST		= 0x58,	// BIST activate FIS - bidirectional
+    FIS_TYPE_PIO_SETUP	= 0x5F,	// PIO setup FIS - device to host
+    FIS_TYPE_DEV_BITS	= 0xA1,	// Set device bits FIS - device to host
+} FIS_TYPE;
+
+enum {
+  SATA_SIG_ATA = 0x00000101,	// SATA drive
+  SATA_SIG_ATAPI = 0xEB140101,	// SATAPI drive
+  SATA_SIG_SEMB = 0xC33C0101,	// Enclosure management bridge
+  SATA_SIG_PM  = 0x96690101	// Port multiplier
+};
 
 typedef struct {
   u64 commandlistbaseaddress;
@@ -77,20 +97,15 @@ typedef volatile struct {
     u8 _r3[96];
 } __attribute__((packed)) Ahcireceivedfis;
 
-
 typedef struct Ahcidevice {
   Ahciport * port;
   Ahcicommand * commandlist;
-  Ahcicommandtable * commandtable;
+  Ahcicommandtable* commandtable;
 } Ahcidevice;
-
 
 static void ahcisetuptransfer() {
 
-
-
 }
-
 
 static inline u32 _ahciclearstatus(volatile u32 *const reg)
 {
@@ -104,6 +119,7 @@ static inline u32 _ahciclearstatus(volatile u32 *const reg)
 int ahcistartcommandengine(Ahciport *const p) {
   int timeout = 1000;
   while ((p->commandstatus & (1 << 15)) && timeout--) {
+    udelay(1);
   }
   if (timeout < 0) {
     return 1;
@@ -117,7 +133,7 @@ int ahcistopcommandengine(Ahciport *const p) {
   int timeout = 1000;
   p->commandstatus &= ~(1 << 0);
   while ((p->commandstatus & (1 << 15)) && timeout--) {
-
+    udelay(1);
   }
   if (timeout < 0) {
     return 1;
@@ -125,6 +141,7 @@ int ahcistopcommandengine(Ahciport *const p) {
   p->commandstatus &= ~(1 << 4);
   timeout = 10000;
   while ((p->commandstatus & (1 << 4)) && timeout--) {
+    udelay(1);
   }
   if (timeout < 0) {
     return 1;
@@ -134,6 +151,7 @@ int ahcistopcommandengine(Ahciport *const p) {
 
 void ahcicommandslotprepare(Ahcidevice *const d) {
   const int BYTES_PER_PRD = 512;
+  const int BYTES_PER_PRD_SHIFT = 9;
   int buf_len = 13;
   int length = 0;
   int k = 0;
@@ -142,10 +160,10 @@ void ahcicommandslotprepare(Ahcidevice *const d) {
   d->commandlist[slotnum].commandtablebase = (u64)d->commandtable;
 
   if (length > 0) {
-    u64 prdtlength;
+    u64 prdtlength = ((buf_len - 1) >> BYTES_PER_PRD_SHIFT) + 1;
     u8 *buf;
     d->commandlist[slotnum].prdtlength = prdtlength;
-    for (int i = 0; i < prdtlength; ++i) {
+    for (u64 i = 0; i < prdtlength; ++i) {
       const u64 bytes = (buf_len < BYTES_PER_PRD) ? buf_len : BYTES_PER_PRD;
       d->commandtable[k].prdt[i].base = buf;
       d->commandtable[k].prdt[i].flags = PRDTABLEBYTES(bytes);
@@ -154,8 +172,19 @@ void ahcicommandslotprepare(Ahcidevice *const d) {
   }
 }
 
-void ahcicommandslotexecute(Ahcidevice *const d) {
+size_t ahcicommandslotexecute(Ahcidevice *const d) {
+  const int slotnumber = 0;
 
+  d->port->commandissue |= (1 << slotnumber);
+  int timeout = 10000;
+  while ((d->port->commandissue) & (1 << slotnumber) &&
+         !(d->port->interruptstatus & (1 << 30))
+           && timeout--) {
+    udelay(100);
+  }
+  if (timeout < 0) {
+    return -1;
+  }
 }
 
 void ahciidentifydevice(Ahcidevice *const d) {
@@ -188,16 +217,17 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       conf.subclass != 0x06) {
     return;
   }
-  cprint(c, "pci: found SATA controller.\n");
+  cprint(c, "pci : Found SATA controller\n");
   // The address of the AHCI Host Bus Adapter is located at the base address register 5.
+  // NOTE(Christian): Aparently there are exceptions to this rule.
   volatile Ahcihostbusadapter* const h = conf.dev.base_address_register[5].address;
 
   {
     if (h->extendedcapabilities & (1 << 0)) {
       if (!(h->handoffcontrolstatus & (1 << 0))) {
-        cprint(c, "ahci: AHCI is owned by the BIOS, will try to obtain control.\n");
+        cprint(c, "ahci: AHCI is owned by the BIOS, we will try to obtain control\n");
       } else {
-        cprint(c, "ahci: AHCI is owned by us.\n");
+        cprint(c, "ahci: AHCI is owned by us\n");
       }
     }
   }
@@ -206,10 +236,11 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   // Reset HBA
   {
     h->globalhostcontrol |= (1 << 0); // HBA_GHC_RESET
-    // TODO: We need some timeout mechanism instead.
-    for (int i = 0; i < 100; ++i) { cputc(c, '.');}
+    for (int i = 0; i < 100; ++i) {
+      udelay(1);
+    }
     if (!(h->globalhostcontrol & (1 << 0))) {
-      cprint(c, "ahci: Failed to reset HBA.\n");
+      cprint(c, "ahci: Failed to reset HBA\n");
       return;
     }
   }
@@ -223,7 +254,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   {
     commandslotcount = BITEXTRACT(reg,5,8) + 1;
     portcount = BITEXTRACT(reg,5,0) + 1;
-    Pair p[] = {{"command slot count", commandslotcount},
+    Pair p[] = {{"Command slot count", commandslotcount},
                 {"portcount", portcount}};
     cprint(c, "ahci: "), cprintpairs(c, p, 2), cnl(c);
   }
@@ -251,25 +282,28 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       d->commandtable = t;
 
       if (ahcistopcommandengine(p)) {
-        cprint(c, "ahci: failed to stop command engine.");
+        cprint(c, "ahci: Failed to stop command engine\n");
         continue;
       }
       p->commandlistbaseaddress = (u64)cl;
       p->frameinfobase = (u64)rf;
       if (ahcistartcommandengine(p)) {
-        cprint(c, "ahci: failed to start command engine.");
+        cprint(c, "ahci: Failed to start command engine\n");
         continue;
       }
       p->commandstatus |= (1 << 28); // ICC Active
       int timeout = 10000;
       while ((p->taskfiledata & ((1 << 7))) && timeout--) { // Taskfiledata busy
-        cputc(c, '.');
+        udelay(1);
       }
       if (p->taskfiledata & (1 << 7)) {
-        cprint(c, "ahci: device failed to spin up in time\n");
+        cprint(c, "ahci: Device failed to spin up in time\n");
         continue;
       }
       switch (p->signature) {
+      case SATA_SIG_ATA:
+        cprint(c, "ahci: Found SATA device\n");
+        break;
       default:
         break;
       }

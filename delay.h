@@ -1,4 +1,3 @@
-
-void udelay(unsigned usecs);
-void mdelay(unsigned msecs);
-void delay(unsigned secs);
+void udelay(u64 usecs);
+//void mdelay(u64 msecs);
+//void delay(u64 secs);

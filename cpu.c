@@ -1,7 +1,11 @@
 #include "u.h"
 #include "dat.h"
 #include "console.h"
+#include "cpufunc.h"
+
 #include "cpu.h"
+
+
 
 // ------------------------------------------------------------------------------------------------
 // Function 0x01
@@ -86,21 +90,28 @@ static inline void cpuid(u32 reg, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
 // ------------------------------------------------------------------------------------------------
 void cpudetect(Console c)
 {
+
+    // Enable FPU unit
+    {
+        u32 cr0 = rcr0();
+        cr0 |= (1 << 2);
+        lcr0(cr0);
+    }
+
     // Register storage
     u32 eax, ebx, ecx, edx;
 
     // Function 0x00 - Vendor-ID and Largest Standard Function
 
-    u32 largestStandardFunc;
+    u32 largeststandardfunction;
     char vendor[13];
-    cpuid(0, &largestStandardFunc, (u32 *)(vendor + 0), (u32 *)(vendor + 8), (u32 *)(vendor + 4));
+    cpuid(0, &largeststandardfunction, (u32 *)(vendor + 0), (u32 *)(vendor + 8), (u32 *)(vendor + 4));
     vendor[12] = '\0';
 
     cprint(c, "CPU Vendor: "), cprint(c, vendor), cputc(c,'\n');
 
     // Function 0x01 - Feature Information
-
-    if (largestStandardFunc >= 0x01)
+    if (largeststandardfunction >= 0x01)
     {
         cpuid(0x01, &eax, &ebx, &ecx, &edx);
 
@@ -129,19 +140,14 @@ void cpudetect(Console c)
 
         cprint(c, "\n");
     }
-
-    if (largestStandardFunc >= 11) {
+    if (largeststandardfunction >= 11) {
 
     }
-
     // Extended Function 0x00 - Largest Extended Function
-
-    u32 largestExtendedFunc;
-    cpuid(0x80000000, &largestExtendedFunc, &ebx, &ecx, &edx);
-
+    u32 largestextendedfunction;
+    cpuid(0x80000000, &largestextendedfunction, &ebx, &ecx, &edx);
     // Extended Function 0x01 - Extended Feature Bits
-
-    if (largestExtendedFunc >= 0x80000001)
+    if (largestextendedfunction >= 0x80000001)
     {
         cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
 
@@ -150,16 +156,12 @@ void cpudetect(Console c)
             cprint(c, "64-bit Architecture\n");
         }
     }
-
     // Extended Function 0x02-0x04 - Processor Name / Brand String
-
-    if (largestExtendedFunc >= 0x80000004)
-    {
+    if (largestextendedfunction >= 0x80000004) {
         char name[48];
         cpuid(0x80000002, (u32 *)(name +  0), (u32 *)(name +  4), (u32 *)(name +  8), (u32 *)(name + 12));
         cpuid(0x80000003, (u32 *)(name + 16), (u32 *)(name + 20), (u32 *)(name + 24), (u32 *)(name + 28));
         cpuid(0x80000004, (u32 *)(name + 32), (u32 *)(name + 36), (u32 *)(name + 40), (u32 *)(name + 44));
-
         // Processor name is right justified with leading spaces
         const char *p = name;
         while (*p == ' ')
@@ -168,6 +170,4 @@ void cpudetect(Console c)
         }
         cprint(c, "CPU Name: "), cprint(c, p), cprint(c,"\n");
     }
-
-
 }

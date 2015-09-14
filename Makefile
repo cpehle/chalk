@@ -6,8 +6,8 @@ CC:=x86_64-elf-gcc
 AS:=x86_64-elf-as
 #CC32:=clang -target i586-elf
 CC32:=i686-elf-gcc
-CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common
-CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostdlib -nostdinc -fno-common -m64 -mcmodel=kernel
+CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostartfiles -nostdlib -nostdinc -fno-common
+CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostartfiles -nostdlib -nostdinc -fno-common -m64 -mcmodel=kernel
 AS32:=i686-elf-as
 QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 \
    -drive file=chalknvme.img,if=none,id=D22 \
@@ -18,7 +18,7 @@ QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,
 QEMU:=qemu-system-x86_64
 
 #OBJS := main.o start64.o mem.o console.o
-OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o nvme.o
+OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o nvme.o delay.o
 
 default: loader.bin chalk.img
 	# mkdir -p isodir
@@ -59,8 +59,6 @@ init32.o: init32.c
 	$(CC32) $(CFLAGS32) -c init32.c -o init32.o
 	objcopy -O elf64-x86-64 init32.o
 
-
-
 start64.o: start64.s
 	$(CC) -c start64.s -o start64.o
 start.o: start.s
@@ -71,7 +69,8 @@ console32.o: console.c console.h
 	$(CC32) $(CFLAGS32) -c console.c -o console32.o
 vesa.o: vesa.c vesa.h
 	$(CC32) $(CFLAGS32) -c vesa.c -o vesa.o
-
+delay.o: delay.c delay.h u.h io.h
+	$(CC32) $(CFLAGS32) -c delay.c -o delay.o
 load.o: load.c
 	$(CC32) $(CFLAGS32) -c $<
 acpi.o: acpi.c acpi.h
@@ -84,7 +83,6 @@ ahci.o: ahci.c ahci.h
 	$(CC32) $(CFLAGS32) -c $<
 relptr.o: relptr.c relptr.h	u.h
 	$(CC32) $(CFLAGS32) -c $<
-
 e1000.o: e1000.c e1000.h
 	$(CC32) $(CFLAGS32) -c $<
 arena.o: arena.c arena.h

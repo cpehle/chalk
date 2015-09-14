@@ -19,15 +19,51 @@
 #define X86_MSR_EFER                0xC0000080
 #define X86_MSR_EFER_LMA			(1 << 10)
 
-#define X86_CR0_PE	(1 <<  0)	/* enable protected mode	*/
-#define X86_CR0_EM	(1 <<  2)	/* disable fpu			*/
-#define X86_CR0_TS	(1 <<  3)	/* task switched		*/
-#define X86_CR0_WP	(1 << 16)	/* force write protection on user read only pages for kernel	*/
-#define X86_CR0_NW	(1 << 29)	/*				*/
-#define X86_CR0_CD	(1 << 30)	/*				*/
-#define X86_CR0_PG	(1 << 31)	/* enable paging		*/
-#define X86_CR4_PVI	(1 <<  1)	/* enable protected mode */
-#define X86_CR4_PAE (1 <<  5)  // enable physical address extension
+// The control register influence the operating mode and states of the processor
+// See section 2.5 (Volume 3A)
+typedef enum {
+  X86_CR0_PE = (1 << 0),    // protection enable
+  X86_CR0_MP = (1 << 1), // monitor coprocessor
+  X86_CR0_EM =	(1 <<  2),	// disable fpu
+  X86_CR0_TS =	(1 <<  3),	// task switched
+  X86_CR4_PAE = (1 <<  5),  // enable physical address extension
+  X86_CR0_WP =	(1 << 16),	// force write protection on user read only pages for kernel
+  X86_CR0_AM =  (1 << 18),
+  X86_CR0_NW =	(1 << 29),	// not write through
+  X86_CR0_CD =	(1 << 30),	// cache disable
+  X86_CR0_PG =	(1 << 31),	// enable paging
+} CR0;
+
+typedef enum {
+  X86_CR1_UNKNOWN
+} CR1;
+
+// CR2 contains the page-fault linear address
+// CR3 contains the physical base of the paging hierachy
+typedef enum {
+  X86_CR3_PCD = (1 << 4), // page level disable
+  X86_CR3_PWT = (1 << 5) // page write through
+} CR3;
+
+typedef enum {
+  X86_CR4_TSD  = (1 << 2), // time stamp disable
+  X86_CR4_PCE  = (1 << 8), // performance-monitoring counter enable
+  X86_CR4_VMXE = (1 << 13), // enable VMX
+  X86_CR4_SMXE = (1 << 14), // enable SMX
+  X86_CR4_PCIDE = (1 << 17), // pcid enable
+} CR4;
+// CR8 provides access to the task priority register, only available in 64bit mode
+
+typedef enum {
+  X86_EFER_SCE = (1 << 0), // system call extension
+  X86_EFER_LME = (1 << 8), // long mode enable
+  X86_EFER_LMA = (1 << 10), // long mode active
+  X86_EFER_NXE = (1 << 11), // no execute enable
+  X86_EFER_SVME = (1 << 12), // secure virtual machine enable
+  // TODO(Christian): Add the rest
+} EFER;
+
+
 
 #define INIT32_CS		0x08
 
@@ -170,7 +206,10 @@ int longmodeactive() {
 extern char* bootstrap_stack_end;
 extern u8* entry64;
 
-void main(u32 magic, u32 mbootinfoaddr) {
+
+void load(Console c);
+
+void kernelmain(u32 magic, u32 mbootinfoaddr) {
   ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
   Console c = &cd;
   cclear(c, 0xff);
@@ -186,10 +225,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
   if (!(mbi->flags & (1 << 3))) {
     for (;;) {}
   }
-
   Multibootmodule *const mbm = (Multibootmodule *)mbi->moduleAddress;
 #endif
-
   // clear the memory from 0x1000 to 0x7000 we will store the
   // bootstrap page tables here. We will map the first 4 gigabytes,
   // this is rather careless if there isn't actually that much memory
@@ -210,60 +247,8 @@ void main(u32 magic, u32 mbootinfoaddr) {
       pde += 0x200000;
     }
   }
+  // TODO(Christian): Check for long mode.
 
-
-#if 0
-  {
-    Elf64_Ehdr *hdr = 0;
-    Elf64_Phdr *phdr = 0;
-    Elf64_Shdr *shdr = 0;
-    u64 srcstart = 0;
-    u64 srcend = 0;
-    u64 dststart = 0;
-    u64 dstend = 0;
-    hdr  = (Elf64_Ehdr *)(mbm->modstart);
-    if (hdr->e_ident[0] != 0x7f || hdr->e_ident[1] != 'E' ||
-        hdr->e_ident[2] != 'L' || hdr->e_ident[3] != 'F') {
-      cprint(c, "Invalid ELF Magic!\n");
-    }
-
-    phdr = (Elf64_Phdr *)((u8 *)hdr + hdr->e_phoff);
-    for (int i = 0; i < hdr->e_phnum; ++i) {
-      if (phdr[i].p_type != 1) {
-        continue;
-      }
-      srcstart = mbm->modstart + phdr[i].p_offset;
-      srcend = srcstart + phdr[i].p_memsz;
-      dststart = phdr[i].p_paddr;
-      dstend = dststart + phdr[i].p_memsz;
-
-      mmove(dststart, srcstart, phdr[i].p_filesz);
-      mset(dststart + phdr[i].p_filesz, 0, phdr[i].p_memsz - phdr[i].p_filesz);
-
-      cprintint(c, phdr[i].p_paddr, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_align, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_filesz, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_offset, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_memsz, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_type, 16, 0), cputc(c,'\n');
-      cprintint(c, phdr[i].p_vaddr, 16, 0), cputc(c,'\n');
-
-      // readseg(pa, phdr->p_filesz, phdr->p_offset);
-    }
-
-    for (int i = 0; i < 4; ++i) {
-      cputc(c, hdr->e_ident[i]);
-    }
-    cputc(c,'\n');
-    if (!(hdr->e_machine == 0x3E)) {
-      cprint(c, "elf: expected x86_64-ELF.\n");
-      return 0;
-    }
-    if (hdr->e_type == 2) {
-      cprint(c, "elf: found executable.\n");
-    }
-  }
-#endif
   // This sequence to enable long mode is documented in the AMD Manual
   // for example.
   disablepaging();
@@ -276,12 +261,11 @@ void main(u32 magic, u32 mbootinfoaddr) {
     for(;;);
   }
   GDTEntry entries[3] = {{0, 0},                       // Null descriptor
-                           {0x00000000, 0x00209800},   // Code, R/X, Nonconforming
-                           {0x00000000, 0x00009000}};  // Data, R/W, Expand Down
+                         {0x00000000, 0x00209800},   // Code, R/X, Nonconforming
+                         {0x00000000, 0x00009000}};  // Data, R/W, Expand Down
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
-
 
   u8 *startup64;
   __asm__(
@@ -291,20 +275,41 @@ void main(u32 magic, u32 mbootinfoaddr) {
   load(c);
 }
 
-
-typedef struct {
-  int dummy;
-} PciState;
-
-typedef struct {
-  PciState pci;
-} KernelState;
+void loadelfimage(void *data, u64 *startaddress, const int pgsz) {
+  Elf64_Ehdr *imageheader = (Elf64_Ehdr *)data;
+  Elf64_Phdr *segments = (Elf64_Phdr *)(imageheader->e_phoff + imageheader);
+  const int N = imageheader->e_phnum;
+  for (int i = 0; i < N; ++i) {
+    Elf64_Phdr *segment = segments + i;
+    mmove((u64 *)segment->p_vaddr, data + segment->p_offset, segment->p_filesz);
+  }
+  *startaddress = imageheader->e_entry;
+}
 
 
 void load(Console c) {
   #if 1
-  KernelState k = {}
+  {
+    const u16 com1 = 0x3f8;
+    outb(com1 + 1, 0x00);    // Disable all interrupts
+    outb(com1 + 3, 0x80);    // Enable DLAB (set baud rate divisor)
+    outb(com1 + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
+    outb(com1 + 1, 0x00);    //                  (hi byte)
+    outb(com1 + 3, 0x03);    // 8 bits, no parity, one stop bit
+    outb(com1 + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
+    outb(com1 + 4, 0x0B);    // IRQs enabled, RTS/DSR set
+    #if 0
+    for (;;) {
+      if(inb(com1 + 5) & 1) {
+        char ch = inb(com1);
+        cputc(c, ch);
+      }
+    }
+    #endif
+  }
+  #endif
 
+  #if 1
   pciscan(c); // This is to test pci traversal.
   // Ethernet
   {
@@ -312,10 +317,9 @@ void load(Console c) {
     cprintpciconf(c, eth);
     e1000init(0, &eth, c);
   }
-
   // Instead of a proper memory allocator we just allocate permanently
   // from one large Arena, this is only a temporary solution.
-  Arena* a;
+  Arena* a = (void *)0;
   arenainit(a, 4000000, (void *)0x1000000);
   int *x = arenapusharray(a, 1000, int);
   int *y = arenapusharray(a, 1000, int);
@@ -326,7 +330,6 @@ void load(Console c) {
     x[i] += y[i];
   }
   cprintint(c, x[400], 16, 0), cputc(c, '\n');
-
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
   {
@@ -336,6 +339,7 @@ void load(Console c) {
   }
   // Ahci code doesn't really work yet.
   ahcipciinit(a, c, 0, 4);
+  //for (;;) {}
   // Eventually we want to enable all CPU features found during detection.
   cpudetect(c);
   u64 t = rdtsc();
@@ -363,15 +367,11 @@ void load(Console c) {
     cprintm44(c, v4mmm(m, m));
   }
   cprintint(c, rdtsc()-t, 16, 0);
-
-
-
-  //for (;;) {}
   // Graphics only work with bochs emulator
   {
     u32 *framebufferaddr;
     {
-      // 0x1234:0x1111
+       // 0x1234:0x1111
       PciConf vesa = pciconfread(0, 2);
       framebufferaddr = (u32 *)vesa.dev.base_address_register[0].address;
     }
@@ -385,22 +385,35 @@ void load(Console c) {
       framebufferaddr[offset] = 0x00eeeeee;
       }
     }
-
-
     // draw a "line"
     for (int i = 0; i < 1920; ++i) {
       offset = (50 * 1920 + i);
       // Format is 0x00rrggbb, can use first byte for alpha blending
       framebufferaddr[offset] = 0x00ff0000;
     }
-
-    float t = 0;
-    BezierData b = {4,{{50,68,0,0},{70,220,0,0},{80,40,0,0},{90,100,0,0}}};
-    while (t < 1) {
-      V4 v = evcubicbezier(b, t);
-      int offset = (u32)(v.v[1]) * 1920 + (u32)(v.v[0]);
-      framebufferaddr[offset] = 0x000000ff;
-      t += 0.00001;
+    {
+      float t = 0;
+      BezierData b = {
+          4,
+          {{50, 68, 0, 0}, {70, 220, 0, 0}, {80, 40, 0, 0}, {90, 100, 0, 0}}};
+      while (t < 1) {
+        V4 v = evcubicbezier(b, t);
+        int offset = (u32)(v.v[1]) * 1920 + (u32)(v.v[0]);
+        framebufferaddr[offset] = 0x000000ff;
+        t += 0.00001;
+      }
+    }
+    {
+      float t = 0;
+      BezierData b = {
+        4,
+        {{10, 20, 0, 0}, {70, 10, 0, 0}, {80, 40, 0, 0}, {90, 100, 0, 0}}};
+      while (t < 1) {
+        V4 v = evcubicbezier(b, t);
+        int offset = (u32)(v.v[1]) * 1920 + (u32)(v.v[0]);
+        framebufferaddr[offset] = 0x0000ff00;
+        t += 0.00001;
+      }
     }
     u32* buf = renderglyphs(a);
     copyrect(framebufferaddr, buf, 0, 20, 98);

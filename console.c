@@ -25,6 +25,10 @@ void cnl(Console cons) {
 }
 
 void cputc(Console cons, int c) {
+  {
+    while(!(inb(0x3f8+5) & 0x60));
+    outb(0x3f8,c);
+  }
   if (c == '\n') {
     cons->pos += 80 - cons->pos % 80;
   } else {
