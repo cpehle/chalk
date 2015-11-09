@@ -8,8 +8,6 @@
 #include "relptr.h"
 #include "e1000.h"
 
-#define DeclareMaybe(t) typedef union { struct { int dummy } none; t just } Maybe##t;
-
 // Transmission commands
 typedef enum {
   TxCmdEop = 1 << 0, // end of packet
@@ -154,9 +152,9 @@ static void e1000send(Ethdev dev, Ethbuf buf) {
   mmiowrite32(dev->mmioaddr + Tdt, dev->txwrite);
 }
 
-DeclareMaybe(Ethdevdesc);
+
 // e1oooinit: Initialize the ethernet device
-MaybeEthdevDesc e1000init(Arena *a, PciConf *c, Console cons) {
+void e1000init(Arena *a, PciConf *c, Console cons) {
   Ethdevdesc ethdev;
   if ((c->vendor_id != 0x8086) ||
       !(c->device_id == 0x100e || c->device_id == 0x1503)) {
