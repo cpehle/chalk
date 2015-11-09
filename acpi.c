@@ -3,6 +3,11 @@
 #include "mem.h"
 #include "console.h"
 
+// * ACPI
+// We implement a simple recursive parser of the various in
+// memory structures presented by ACPI but do not attempt to interpret
+// the bytecode that is also part of the specification.
+
 typedef struct AcpiHeader {
   u32 signature;
   u32 length;
@@ -140,7 +145,8 @@ static void acpiparsexsdt(Acpi a, AcpiHeader *xsdt) {
 
 void acpiinit(Acpi a, Console c) {
   {
-    // See 5.2.5.1 and 5.2.5.3
+    // See 5.2.5.1 and 5.2.5.3 of ACPI specification on where the root
+    // system description pointer can be located.
     u8 *p = (u8 *)0x000e0000;
     u8 *end = (u8 *)0x000fffff;
     while (p < end) {

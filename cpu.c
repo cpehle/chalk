@@ -5,8 +5,6 @@
 
 #include "cpu.h"
 
-
-
 // ------------------------------------------------------------------------------------------------
 // Function 0x01
 
@@ -102,7 +100,6 @@ void cpudetect(Console c)
     u32 eax, ebx, ecx, edx;
 
     // Function 0x00 - Vendor-ID and Largest Standard Function
-
     u32 largeststandardfunction;
     char vendor[13];
     cpuid(0, &largeststandardfunction, (u32 *)(vendor + 0), (u32 *)(vendor + 8), (u32 *)(vendor + 4));

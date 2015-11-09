@@ -1,14 +1,16 @@
-OBJDUMP32:=i686-elf-objdump
-OBJCOPY32:=i686-elf-objcopy
-LD32:=i686-elf-ld
-CC:=x86_64-elf-gcc
-#CC:=clang -target x86_64-elf
-AS:=x86_64-elf-as
-#CC32:=clang -target i586-elf
-CC32:=i686-elf-gcc
+BIN:=cross/bin
+OBJDUMP32:=$(BIN)/i686-elf-objdump
+OBJCOPY32:=$(BIN)/i686-elf-objcopy
+OBJCOPY:=$(BIN)/x86_64-elf-objcopy
+LD32:=$(BIN)/i686-elf-ld
+CC:=$(BIN)/x86_64-elf-gcc
+#CC:=clang -target x86_64-pc-elf-none
+AS:=$(BIN)/x86_64-elf-as
+#CC32:=clang -target i686-pc-elf-none
+CC32:=$(BIN)/i686-elf-gcc
 CFLAGS32:=-std=c11 -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostartfiles -nostdlib -nostdinc -fno-common
 CFLAGS:=-std=c11 -mno-red-zone -ffreestanding -O2 -Wall -Wextra -fno-builtin -nostartfiles -nostdlib -nostdinc -fno-common -m64 -mcmodel=kernel
-AS32:=i686-elf-as
+AS32:=$(BIN)/i686-elf-as
 QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0 \
    -drive file=chalknvme.img,if=none,id=D22 \
    -device nvme,drive=D22,serial=1234 \
@@ -17,7 +19,7 @@ QEMUFLAGS:=-hda chalk.img -serial mon:stdio -smp 2 -m 512 -drive file=chalk.img,
 
 QEMU:=qemu-system-x86_64
 
-#OBJS := main.o start64.o mem.o console.o
+OBJS := main.o start64.o mem.o console.o
 OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o nvme.o delay.o
 
 default: loader.bin chalk.img
@@ -29,11 +31,6 @@ default: loader.bin chalk.img
 	# cp grub.cfg isodir/boot/grub/grub.cfg
 	# grub-mkrescue -o kernel.iso isodir
 	$(QEMU) $(QEMUFLAGS)
-
-# chalk.img: bootblock kernel.elf
-# 	dd if=/dev/zero of=chalk.img count=10000
-# 	dd if=bootblock of=chalk.img conv=notrunc
-# 	dd if=kernel.elf of=chalk.img seek=1
 
 chalk.img: bootblock loader.bin
 	dd if=/dev/zero of=chalk.img count=10000
@@ -49,15 +46,14 @@ bootblock: boot.s bootmain.c
 	./sign.pl bootblock
 
 loader.bin: $(OBJS32) linker.ld
-	$(CC32) $(CFLAGS32) -T linker.ld -o loader.bin $(OBJS32) -lgcc
+	$(LD32) -Lcross/lib/gcc/i686-elf/6.0.0/ -T linker.ld -o loader.bin $(OBJS32) -lgcc
 
-# kernel.elf: $(OBJS) init32.o
-# 	$(CC) $(CFLAGS)	-T linker64.ld -o kernel.elf $(OBJS) init32.o -lgcc
-
+kernel.elf: $(OBJS) init32.o
+	$(CC) $(CFLAGS)	-T linker64.ld -o kernel.elf $(OBJS) init32.o -lgcc
 
 init32.o: init32.c
 	$(CC32) $(CFLAGS32) -c init32.c -o init32.o
-	objcopy -O elf64-x86-64 init32.o
+	$(OBJCOPY) -O elf64-x86-64 init32.o
 
 start64.o: start64.s
 	$(CC) -c start64.s -o start64.o
@@ -105,5 +101,4 @@ run:
 clean:
 	rm *.o
 	rm *.bin
-	rm *.iso
 	rm *.img

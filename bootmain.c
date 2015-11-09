@@ -1,12 +1,7 @@
-// Boot loader.
-//
-// Part of the boot sector, along with bootasm.S, which calls bootmain().
-// bootasm.S has put the processor into protected 32-bit mode.
-// bootmain() loads a multiboot kernel image from the disk starting at
-// sector 1 and then jumps to the kernel entry routine.
-
+// Boot loader
 #include "u.h"
 #include "io.h"
+#include "elf.h"
 
 #define SECTSIZE  512
 
@@ -21,35 +16,50 @@ struct mbheader {
   u32 entry_addr;
 };
 
-void readseg(u8*, u32, u32);
+void readsegment(u8*, u32, u32);
 
-/* void bootclrscr(u16 color) { */
-/*   u16* buf = (u16*)(0xb8000); */
-/*   for (int i = 0; i < 80 * 25; ++i) { */
-/*       buf[i] = color << 12; */
-/*   } */
-/* } */
+void bootclrscr(u16 color) {
+  u16* buf = (u16*)(0xb8000);
+  for (int i = 0; i < 80 * 25; ++i) {
+      buf[i] = color << 12;
+  }
+}
+
 
 void
 bootmain(void)
 {
+  outw(0x3D4,0x200A); // disable cursor
+  #if 0
+  ElfHeader* eh = (ElfHeader*)0x10000;
+  ElfProgramHeader* ph, *eph;
+  readsegment((u8*)eh, SECTSIZE*8, 0);
+  if (eh->magic != elfmagic) {
+    bootclrscr(0xee);
+    for (;;);
+  }
+  bootclrscr(0x00);
+  ph = (ElfProgramHeader*)((u8*)eh + eh->phoff);
+  eph = ph + eh->phnum;
+  for (; ph < eph; ph++) {
+    readsegment((u8*)ph->paddr, ph->memsz, ph->offset);
+  }
+  bootclrscr(0xaa);
+  ((void (*)(void)) ((u32)(eh->entry)))();
+  bootclrscr(0xff);
+  #else
   struct mbheader *hdr;
   void (*entry)(void);
   u32 *x;
   u32 n;
-
   x = (u32*) 0x10000; // scratch space
   outw(0x3D4,0x200A);
-  //bootclrscr(0xee);
-  // multiboot header must be in the first 8192 bytes
-  readseg((u8*)x, 8192, 0);
 
+  readsegment((u8*)x, 8192, 0);
   for (n = 0; n < 8192/4; n++)
     if (x[n] == 0x1BADB002)
       if ((x[n] + x[n+1] + x[n+2]) == 0)
         goto found_it;
-
-
   // failure
   return;
 
@@ -64,7 +74,7 @@ found_it:
     return; // invalid;
   if (hdr->load_end_addr < hdr->load_addr)
     return; // no idea how much to load
-  readseg((u8*) hdr->load_addr,
+  readsegment((u8*) hdr->load_addr,
     (hdr->load_end_addr - hdr->load_addr),
     (n * 4) - (hdr->header_addr - hdr->load_addr));
 
@@ -76,9 +86,10 @@ found_it:
   // Does not return!
   entry = (void(*)(void))(hdr->entry_addr);
   entry();
+  #endif
 }
 
-void
+inline void
 waitdisk(void)
 {
   // Wait for disk ready.
@@ -107,7 +118,7 @@ readsect(void *dst, u32 offset)
 // Read 'count' bytes at 'offset' from kernel into physical address 'pa'.
 // Might copy more than asked.
 void
-readseg(u8* pa, u32 count, u32 offset)
+readsegment(u8* pa, u32 count, u32 offset)
 {
   u8* epa;
 

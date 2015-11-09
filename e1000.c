@@ -8,6 +8,8 @@
 #include "relptr.h"
 #include "e1000.h"
 
+#define DeclareMaybe(t) typedef union { struct { int dummy } none; t just } Maybe##t;
+
 // Transmission commands
 typedef enum {
   TxCmdEop = 1 << 0, // end of packet
@@ -26,6 +28,7 @@ typedef enum {
   Ims = 0x00d0 >> 2,  // Interrupt mask set/read
   Rctl = 0x0100 >> 2, // receive control
   Tctl = 0x0400 >> 2, // transmit control
+  Tctltipg = 0x00410 >> 2, // TX interpacket gap
 
   Rdbal = 0x2800 >> 2, // receive descriptor base low
   Rdbah = 0x2804 >> 2, // receive descriptor base high
@@ -151,8 +154,9 @@ static void e1000send(Ethdev dev, Ethbuf buf) {
   mmiowrite32(dev->mmioaddr + Tdt, dev->txwrite);
 }
 
-
-void e1000init(Arena *a, PciConf *c, Console cons) {
+DeclareMaybe(Ethdevdesc);
+// e1oooinit: Initialize the ethernet device
+MaybeEthdevDesc e1000init(Arena *a, PciConf *c, Console cons) {
   Ethdevdesc ethdev;
   if ((c->vendor_id != 0x8086) ||
       !(c->device_id == 0x100e || c->device_id == 0x1503)) {
@@ -162,9 +166,6 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   volatile u32* mmio = d.base_address_register[0].address;
   ethdev.mmioaddr = mmio;
   cprintint(cons, (u32)mmio, 16, 0);
-
-  RelativePointer rctrl = { .base = mmio, .offset = Ctrl};
-  RelativePointer rdbal = { mmio, Rdbal};
 
   u8 mac[6] = {};
   // TODO: Should determine number of receive and transmission registers.
@@ -182,7 +183,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   } else { // read MAC address from EEPROM instead
     return;
   }
-  cprint(cons, "\nMAC:");
+  cprint(cons, "e1000: mac address is ");
   for (int i = 0; i < 6; ++i) {
     cprintint(cons, mac[i], 16, 0),
         (i == 5) ? cputc(cons, '\n') : cputc(cons, ':');
@@ -204,19 +205,20 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   mmio[Rdt] = Nrx - 1;
   mmio[Rctl] = Rctl_EN | Rctl_SBP | Rctl_UPE | Rctl_MPE | Rctl_LBM_NONE |
                      RTCL_RDMTS_HALF | Rctl_BAM | Rctl_SECRC | Rctl_BSIZE_2048;
-
   mset(tx,0,Ntx*sizeof(TransDesc));
   for (int i = 0; i<Ntx; ++i) {
     tx[i].status = (1<<0); // mark descriptor complete
   }
-  mmio[Tdbal] = (u64)tx;
-  mmio[Tdbah] = (u64)tx >> 32;
+  mmio[Tdbal] = (u32)tx;
+  mmio[Tdbah] = 0;
   mmio[Tdlen] = Ntx * sizeof(TransDesc);
   mmio[Tdh] = 0;
-  mmio[Tdt] = Ntx-1;
-  mmio[Tctl] = Tctl_EN | Tctl_PSP | (15 < Tctl_CT_SHIFT) | (64 << Tctl_COLD_SHIFT) | Tctl_RTLC;
+  mmio[Tdt] = 0;
+  mmio[Tctl] = Tctl_EN | Tctl_PSP |  (0x10 < Tctl_CT_SHIFT) | (0x40 << Tctl_COLD_SHIFT);
 
-
+  mmio[Tctltipg]  = 0x0;
+  mmio[Tctltipg] |= 0xa;
+  mmio[Tctltipg] |= (0x4) << 10;
+  mmio[Tctltipg] |= (0x6) << 20;
   return;
-  // need to setup the transmission and receive ringbuffers
 }

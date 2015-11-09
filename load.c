@@ -20,7 +20,7 @@
 #define X86_MSR_EFER_LMA			(1 << 10)
 
 // The control register influence the operating mode and states of the processor
-// See section 2.5 (Volume 3A)
+// See section 2.5 (Volume 3A) of the Intel manual
 typedef enum {
   X86_CR0_PE = (1 << 0),    // protection enable
   X86_CR0_MP = (1 << 1), // monitor coprocessor
@@ -150,7 +150,7 @@ typedef struct {
 
 static char* bootmsg = "Chalk.\n";
 
-void disablepaging() {
+static inline void disablepaging() {
   u32 val = X86_CR0_PG;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -160,7 +160,7 @@ void disablepaging() {
                        : "ri"(~val));
 }
 
-void enablepaging() {
+static inline void enablepaging() {
   u32 val = X86_CR0_PG | X86_CR0_WP | X86_CR0_PE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -170,7 +170,7 @@ void enablepaging() {
                        : "ri"(val));
 }
 
-void enablepaemode() {
+static inline void enablepaemode() {
   u32 val = X86_CR4_PAE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr4, %0   \n"
@@ -180,33 +180,31 @@ void enablepaemode() {
                        : "ri"(val));
 }
 
-void enablelongmode() {
+static inline void enablelongmode() {
   u32 efer = rdmsr(0xc0000080);
   efer |= (1 << 8);
   wrmsr(0xc0000080, efer);
 }
 
-u32 getactivepagetable(void) {
+static inline u32 getactivepagetable(void) {
    u32 pgm;
     __asm__ __volatile__ ("mov %%cr3, %0\n" :"=a" (pgm));
     return pgm;
 }
 
-void setactivepagetable(u32 root) {
+inline void setactivepagetable(u32 root) {
    __asm__ __volatile__ ("mov %0, %%cr3 \n"
                         :
                         : "r"(root));
 }
 
-int longmodeactive() {
+inline int longmodeactive() {
     u32 efer = rdmsr(X86_MSR_EFER);
     return (efer & X86_MSR_EFER_LMA);
 }
 
 extern char* bootstrap_stack_end;
 extern u8* entry64;
-
-
 void load(Console c);
 
 void kernelmain(u32 magic, u32 mbootinfoaddr) {
@@ -227,11 +225,12 @@ void kernelmain(u32 magic, u32 mbootinfoaddr) {
   }
   Multibootmodule *const mbm = (Multibootmodule *)mbi->moduleAddress;
 #endif
+
   // clear the memory from 0x1000 to 0x7000 we will store the
   // bootstrap page tables here. We will map the first 4 gigabytes,
   // this is rather careless if there isn't actually that much memory
   // in the machine.
-  // mset((void *)0x1000, 0, 6000);
+  mset((void *)0x1000, 0, 6000);
   u64 *p4ml = (u64 *)(0x1000);
   u64 *pdpt = (u64 *)(0x2000);
   u64 *pd[4] = {(u64 *)(0x3000), (u64 *)0x4000, (u64 *)0x5000, (u64 *)0x6000};
@@ -247,10 +246,8 @@ void kernelmain(u32 magic, u32 mbootinfoaddr) {
       pde += 0x200000;
     }
   }
-  // TODO(Christian): Check for long mode.
-
-  // This sequence to enable long mode is documented in the AMD Manual
-  // for example.
+  // Now enable long mode, the sequence to enable long mode is
+  // documented in the AMD Manual.
   disablepaging();
   enablepaemode();
   enablelongmode();
@@ -272,6 +269,7 @@ void kernelmain(u32 magic, u32 mbootinfoaddr) {
       "	call 1f			\n\t" /* retrieve ip of next instruction */
       "1:	popl %0 		\n\t" /* save in addr  */
       : "=r"(startup64));
+
   load(c);
 }
 
@@ -317,19 +315,21 @@ void load(Console c) {
     cprintpciconf(c, eth);
     e1000init(0, &eth, c);
   }
+  for (;;) {}
+
   // Instead of a proper memory allocator we just allocate permanently
   // from one large Arena, this is only a temporary solution.
+  // Eventually we want to guarantee that processes and tasks get
+  // different arenas with potential overlap in a single address
+  // space. There shouldn't be any hardware protections in place,
+  // since it introduces unnescessary overhead and a false sense of
+  // security.
   Arena* a = (void *)0;
   arenainit(a, 4000000, (void *)0x1000000);
-  int *x = arenapusharray(a, 1000, int);
-  int *y = arenapusharray(a, 1000, int);
-  for (int i = 0; i < 1000; ++i) {
-    x[i] = y[i] = 1;
-  }
-  for (int i = 0; i < 1000; ++i) {
-    x[i] += y[i];
-  }
-  cprintint(c, x[400], 16, 0), cputc(c, '\n');
+  // Functions that need to allocate memory need to passed a memory
+  // arena as part of their input.
+
+  // We now initialize all known hardware without relying on dynamic detection.
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
   {
@@ -339,7 +339,7 @@ void load(Console c) {
   }
   // Ahci code doesn't really work yet.
   ahcipciinit(a, c, 0, 4);
-  //for (;;) {}
+  for (;;);
   // Eventually we want to enable all CPU features found during detection.
   cpudetect(c);
   u64 t = rdtsc();
@@ -375,7 +375,6 @@ void load(Console c) {
       PciConf vesa = pciconfread(0, 2);
       framebufferaddr = (u32 *)vesa.dev.base_address_register[0].address;
     }
-
     vbeset(1920, 1200, 32);
     int offset = 0;
     for (int i = 0; i < 1920; ++i) {

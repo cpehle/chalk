@@ -3,7 +3,7 @@
 #include "cpu.h"
 #include "cpufunc.h"
 #include "dat.h"
-#include "console.h"
+
 
 typedef struct GDTEntry {
   u32 first;
@@ -23,7 +23,7 @@ typedef struct GDTEntry {
 #define X86_CR4_PVI	(1 <<  1)	/* enable protected mode */
 #define X86_CR4_PAE (1 <<  5)  // enable physical address extension
 
-void disablepaging() {
+inline static void __attribute__((section("init32"))) disablepaging() {
   u32 val = X86_CR0_PG;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -33,7 +33,7 @@ void disablepaging() {
                        : "ri"(~val));
 }
 
-void enablepaging() {
+inline static void  __attribute__((section("init32"))) enablepaging() {
   u32 val = X86_CR0_PG | X86_CR0_WP | X86_CR0_PE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr0, %0   \n"
@@ -43,7 +43,7 @@ void enablepaging() {
                        : "ri"(val));
 }
 
-void enablepaemode() {
+inline static void __attribute__((section("init32"))) enablepaemode() {
   u32 val = X86_CR4_PAE;
   u32 tmp;
   __asm__ __volatile__("mov  %%cr4, %0   \n"
@@ -53,34 +53,30 @@ void enablepaemode() {
                        : "ri"(val));
 }
 
-void enablelongmode() {
+inline static void  __attribute__((section("init32"))) enablelongmode() {
   u32 efer = rdmsr(0xc0000080);
   efer |= (1 << 8);
   wrmsr(0xc0000080, efer);
 }
 
-u32 getactivepagetable(void) {
+inline static u32 __attribute__((section("init32"))) getactivepagetable(void) {
    u32 pgm;
     __asm__ __volatile__ ("mov %%cr3, %0\n" :"=a" (pgm));
     return pgm;
 }
 
-void setactivepagetable(u32 root) {
+inline static void __attribute__((section("init32"))) setactivepagetable(u32 root) {
    __asm__ __volatile__ ("mov %0, %%cr3 \n"
                         :
                         : "r"(root));
 }
 
-int longmodeactive() {
+inline static int  __attribute__((section("init32"))) longmodeactive() {
     u32 efer = rdmsr(X86_MSR_EFER);
     return (efer & X86_MSR_EFER_LMA);
 }
 
-void init32() {
-  ConsoleDesc cd = {0, 0xf0, (unsigned short *)0xb8000};
-  Console c = &cd;
-  cclear(c, 0xaa);
-  cprint(c, "Chalk.");
+void __attribute__((section("init32"))) entry32() {
   // clear the memory from 0x1000 to 0x7000 we will store the
   // bootstrap page tables here. We will map the first 4 gigabytes,
   // this is rather careless if there isn't actually that much memory
@@ -107,7 +103,7 @@ void init32() {
   // This sequence to enable long mode is documented in the AMD Manual for example.
   disablepaging();
   enablepaemode();
-  enablelongmode();
+   enablelongmode();
   setactivepagetable(0x1000);
   enablepaging();
   if (!longmodeactive()) {
@@ -119,11 +115,5 @@ void init32() {
   mmove((void *)0, entries, sizeof(entries));
   struct SegRegionDesc r = {0x00000, 3};
   lgdt(&r);
-
-  u8 *startup64;
-  __asm__(
-          "	call 1f			\n\t" /* retrieve ip of next instruction */
-          "1:	popl %0 		\n\t" /* save in addr  */
-          : "=r"(startup64));
-  for (;;) {};
+  return;
 }

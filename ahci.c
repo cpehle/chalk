@@ -9,6 +9,116 @@
 
 #define BITEXTRACT(c,x,y) ((c & (((1 << x) - 1) << y)) >> y)
 
+typedef enum AtaCommand
+{
+    ATA_NOP                                 = 0x00,
+    ATA_CFA_REQUEST_EXTENDED_ERROR_CODE     = 0x03,
+    ATA_DATA_SET_MANAGEMENT                 = 0x06,
+    ATA_DEVICE_RESET                        = 0x08,
+    ATA_RECALIBRATE                         = 0x10,
+    ATA_READ_SECTORS                        = 0x20,
+    ATA_READ_SECTORS_WITHOUT_RETRIES        = 0x21,
+    ATA_READ_LONG                           = 0x22,
+    ATA_READ_LONG_WITHOUT_RETRIES           = 0x23,
+    ATA_READ_SECTORS_EXT                    = 0x24,
+    ATA_READ_DMA_EXT                        = 0x25,
+    ATA_READ_DMA_QUEUED_EXT                 = 0x26,
+    ATA_READ_NATIVE_MAX_ADDRESS_EXT         = 0x27,
+    ATA_READ_MULTIPLE_EXT                   = 0x29,
+    ATA_READ_STREAM_DMA_EXT                 = 0x2a,
+    ATA_READ_STREAM_EXT                     = 0x2b,
+    ATA_READ_LOG_EXT                        = 0x2f,
+    ATA_WRITE_SECTORS                       = 0x30,
+    ATA_WRITE_SECTORS_WITHOUT_RETRIES       = 0x31,
+    ATA_WRITE_LONG                          = 0x32,
+    ATA_WRITE_LONG_WITHOUT_RETRIES          = 0x33,
+    ATA_WRITE_SECTORS_EXT                   = 0x34,
+    ATA_WRITE_DMA_EXT                       = 0x35,
+    ATA_WRITE_DMA_QUEUED_EXT                = 0x36,
+    ATA_SET_MAX_ADDRESS_EXT                 = 0x37,
+    ATA_CFA_WRITE_SECTORS_WITHOUT_ERASE     = 0x38,
+    ATA_WRITE_MULTIPLE_EXT                  = 0x39,
+    ATA_WRITE_STREAM_DMA_EXT                = 0x3a,
+    ATA_WRITE_STREAM_EXT                    = 0x3b,
+    ATA_WRITE_VERIFY                        = 0x3c,
+    ATA_WRITE_DMA_FUA_EXT                   = 0x3d,
+    ATA_WRITE_DMA_QUEUED_FUA_EXT            = 0x3e,
+    ATA_WRITE_LOG_EXT                       = 0x3f,
+    ATA_READ_VERIFY_SECTORS                 = 0x40,
+    ATA_READ_VERIFY_SECTORS_WITHOUT_RETRIES = 0x41,
+    ATA_READ_VERIFY_SECTORS_EXT             = 0x42,
+    ATA_WRITE_UNCORRECTABLE_EXT             = 0x45,
+    ATA_READ_LOG_DMA_EXT                    = 0x47,
+    ATA_FORMAT_TRACK                        = 0x50,
+    ATA_CONFIGURE_STREAM                    = 0x51,
+    ATA_WRITE_LOG_DMA_EXT                   = 0x57,
+    ATA_TRUSTED_RECEIVE                     = 0x5c,
+    ATA_TRUSTED_RECEIVE_DMA                 = 0x5d,
+    ATA_TRUSTED_SEND                        = 0x5e,
+    ATA_TRUSTED_SEND_DMA                    = 0x5f,
+    ATA_READ_FPDMA_QUEUED                   = 0x60,
+    ATA_WRITE_FPDMA_QUEUED                  = 0x61,
+    ATA_SEEK                                = 0x70,
+    ATA_CFA_TRANSLATE_SECTOR                = 0x87,
+    ATA_EXECUTE_DEVICE_DIAGNOSTIC           = 0x90,
+    ATA_INITIALIZE_DEVICE_PARAMETERS        = 0x91,
+    ATA_DOWNLOAD_MICROCODE                  = 0x92,
+    ATA_STANDBY_IMMEDIATE__ALT              = 0x94,
+    ATA_IDLE_IMMEDIATE__ALT                 = 0x95,
+    ATA_STANDBY__ALT                        = 0x96,
+    ATA_IDLE__ALT                           = 0x97,
+    ATA_CHECK_POWER_MODE__ALT               = 0x98,
+    ATA_SLEEP__ALT                          = 0x99,
+    ATA_PACKET                              = 0xa0,
+    ATA_IDENTIFY_PACKET_DEVICE              = 0xa1,
+    ATA_SERVICE                             = 0xa2,
+    ATA_SMART                               = 0xb0,
+    ATA_DEVICE_CONFIGURATION_OVERLAY        = 0xb1,
+    ATA_NV_CACHE                            = 0xb6,
+    ATA_CFA_ERASE_SECTORS                   = 0xc0,
+    ATA_READ_MULTIPLE                       = 0xc4,
+    ATA_WRITE_MULTIPLE                      = 0xc5,
+    ATA_SET_MULTIPLE_MODE                   = 0xc6,
+    ATA_READ_DMA_QUEUED                     = 0xc7,
+    ATA_READ_DMA                            = 0xc8,
+    ATA_READ_DMA_WITHOUT_RETRIES            = 0xc9,
+    ATA_WRITE_DMA                           = 0xca,
+    ATA_WRITE_DMA_WITHOUT_RETRIES           = 0xcb,
+    ATA_WRITE_DMA_QUEUED                    = 0xcc,
+    ATA_CFA_WRITE_MULTIPLE_WITHOUT_ERASE    = 0xcd,
+    ATA_WRITE_MULTIPLE_FUA_EXT              = 0xce,
+    ATA_CHECK_MEDIA_CARD_TYPE               = 0xd1,
+    ATA_GET_MEDIA_STATUS                    = 0xda,
+    ATA_ACKNOWLEDGE_MEDIA_CHANGE            = 0xdb,
+    ATA_BOOT_POST_BOOT                      = 0xdc,
+    ATA_BOOT_PRE_BOOT                       = 0xdd,
+    ATA_MEDIA_LOCK                          = 0xde,
+    ATA_MEDIA_UNLOCK                        = 0xdf,
+    ATA_STANDBY_IMMEDIATE                   = 0xe0,
+    ATA_IDLE_IMMEDIATE                      = 0xe1,
+    ATA_STANDBY                             = 0xe2,
+    ATA_IDLE                                = 0xe3,
+    ATA_READ_BUFFER                         = 0xe4,
+    ATA_CHECK_POWER_MODE                    = 0xe5,
+    ATA_SLEEP                               = 0xe6,
+    ATA_FLUSH_CACHE                         = 0xe7,
+    ATA_WRITE_BUFFER                        = 0xe8,
+    ATA_WRITE_SAME                          = 0xe9,
+    ATA_FLUSH_CACHE_EXT                     = 0xea,
+    ATA_IDENTIFY_DEVICE                     = 0xec,
+    ATA_MEDIA_EJECT                         = 0xed,
+    ATA_IDENTIFY_DMA                        = 0xee,
+    ATA_SET_FEATURES                        = 0xef,
+    ATA_SECURITY_SET_PASSWORD               = 0xf1,
+    ATA_SECURITY_UNLOCK                     = 0xf2,
+    ATA_SECURITY_ERASE_PREPARE              = 0xf3,
+    ATA_SECURITY_ERASE_UNIT                 = 0xf4,
+    ATA_SECURITY_FREEZE_LOCK                = 0xf5,
+    ATA_SECURITY_DISABLE_PASSWORD           = 0xf6,
+    ATA_READ_NATIVE_MAX_ADDRESS             = 0xf8,
+    ATA_SET_MAX                             = 0xf9
+} AtaCommand;
+
 typedef enum
 {
     FIS_TYPE_REG_H2D	= 0x27,	// Register FIS - host to device
@@ -212,7 +322,7 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   u32 portcount;
   u32 commandslotcount;
   volatile u32 reg;
-
+  //
   if (conf.class_code != 0x01 ||
       conf.subclass != 0x06) {
     return;
@@ -220,8 +330,8 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   cprint(c, "pci : Found SATA controller\n");
   // The address of the AHCI Host Bus Adapter is located at the base address register 5.
   // NOTE(Christian): Aparently there are exceptions to this rule.
+  // See for example the linux or openbsd code.
   volatile Ahcihostbusadapter* const h = conf.dev.base_address_register[5].address;
-
   {
     if (h->extendedcapabilities & (1 << 0)) {
       if (!(h->handoffcontrolstatus & (1 << 0))) {
@@ -254,11 +364,9 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
   {
     commandslotcount = BITEXTRACT(reg,5,8) + 1;
     portcount = BITEXTRACT(reg,5,0) + 1;
-    Pair p[] = {{"Command slot count", commandslotcount},
-                {"portcount", portcount}};
+    Pair p[] = {{"Command slot count", commandslotcount}, {"portcount", portcount}};
     cprint(c, "ahci: "), cprintpairs(c, p, 2), cnl(c);
   }
-
 
   for (int i = 0; i < 32; ++i) {
     if (!(h->portsimplemented & (1 << i))) {
@@ -266,12 +374,11 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
     } else {
       Ahciport* const p = &h->port[i];
       if (h->capabilities & (1 << 27)) { // SSS -- Staggered spinup supported
+        cprint(c, "ahci: spinning up device...");
         p->commandstatus |= (1 << 1); // Spin up device
       }
-
       ahciclearstatus(p, sataerror);
       ahciclearstatus(p, interruptstatus);
-
       const int ncs = 20;
       Ahcidevice *const d = arenapushstruct(m, Ahcidevice);
       Ahcicommand *const cl = arenapusharrayalign(m, ncs, Ahcicommand, 1024);
@@ -280,15 +387,14 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
       d->port = p;
       d->commandlist = cl;
       d->commandtable = t;
-
       if (ahcistopcommandengine(p)) {
-        cprint(c, "ahci: Failed to stop command engine\n");
+        cprint(c, "ahci: failed to stop command engine\n");
         continue;
       }
       p->commandlistbaseaddress = (u64)cl;
       p->frameinfobase = (u64)rf;
       if (ahcistartcommandengine(p)) {
-        cprint(c, "ahci: Failed to start command engine\n");
+        cprint(c, "ahci: failed to start command engine\n");
         continue;
       }
       p->commandstatus |= (1 << 28); // ICC Active
@@ -297,12 +403,12 @@ void ahcipciinit(Arena *m, Console c, u8 bus, u8 slot) {
         udelay(1);
       }
       if (p->taskfiledata & (1 << 7)) {
-        cprint(c, "ahci: Device failed to spin up in time\n");
+        cprint(c, "ahci: device failed to spin up in time\n");
         continue;
       }
       switch (p->signature) {
       case SATA_SIG_ATA:
-        cprint(c, "ahci: Found SATA device\n");
+        cprint(c, "ahci: found SATA device on port "), cprintint(c, i, 16, 0), cnl(c);
         break;
       default:
         break;

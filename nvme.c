@@ -1,4 +1,3 @@
-
 #include "u.h"
 #include "dat.h"
 #include "console.h"
@@ -34,8 +33,5 @@ u64 nvmemmioread() {
 
 void nvmepciinit(Arena*m, Console c, PciConf conf) {
         volatile u64* mmio =  conf.dev.base_address_register[0].address;
-
-        Pair p[] = {{"Hello", 12}, {"Test", 123}};
-        cprintpairs(c, p, 2);
         return;
 }

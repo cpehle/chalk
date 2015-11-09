@@ -45,3 +45,16 @@ void *mmove(void *dst, const void *src, unsigned int n) {
 
   return dst;
 }
+
+
+void* memcpy(void* dst, const void* src, unsigned int n) {
+  const char* s;
+  char *d;
+  s = src;
+  d = dst;
+
+  while (n-- > 0)
+    *d++ = *s++;
+
+  return dst;
+}
