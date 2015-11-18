@@ -16,6 +16,8 @@
 #include "acpi.h"
 #include "graphics.h"
 
+#include "assert.h"
+
 #define X86_MSR_EFER                0xC0000080
 #define X86_MSR_EFER_LMA			(1 << 10)
 
@@ -269,7 +271,6 @@ void kernelmain(u32 magic, u32 mbootinfoaddr) {
       "	call 1f			\n\t" /* retrieve ip of next instruction */
       "1:	popl %0 		\n\t" /* save in addr  */
       : "=r"(startup64));
-
   load(c);
 }
 
@@ -307,6 +308,7 @@ void load(Console c) {
   }
   #endif
 
+  assert(0);
   #if 1
   pciscan(c); // This is to test pci traversal.
   // Ethernet
@@ -325,7 +327,7 @@ void load(Console c) {
   // since it introduces unnescessary overhead and a false sense of
   // security.
   Arena* a = (void *)0;
-  arenainit(a, 4000000, (void *)0x1000000);
+  arenainit(a, 1000*1000*1000*sizeof(u8), (void *)0x100000);
   // Functions that need to allocate memory need to passed a memory
   // arena as part of their input.
 

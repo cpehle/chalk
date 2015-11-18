@@ -1,6 +1,13 @@
 #include "u.h"
 #include "arena.h"
 
+// Those are only really used to provide assertions....
+#include "dat.h"
+#include "console.h"
+#include "assert.h"
+
+
+
 typedef struct TemporaryMemory
 {
         Arena *arena;
@@ -35,10 +42,10 @@ inline void* arenapushsize_(Arena *a, size_t sizeinit, size_t alignment)
 {
     size_t size = sizeinit, alignmentoffset = arenagetalignementoffset(a, alignment);
     size += alignmentoffset;
-    // Assert((a->used + size) <= a->size);
+    assert((a->used + size) <= a->size);
     void *res = a->base + a->used + alignmentoffset;
     a->used += size;
-    // Assert(size >= sizeInit);
+    assert(size >= sizeinit);
     return(res);
 }
 
@@ -54,15 +61,15 @@ inline TemporaryMemory begintemporarymemory(Arena *a)
 inline void endtemporarymemory(TemporaryMemory TempMem)
 {
     Arena *Arena = TempMem.arena;
-    // Assert(Arena->used >= TempMem.used);
+    assert(Arena->used >= TempMem.used);
     Arena->used = TempMem.used;
-    // Assert(Arena->temp_count > 0);
+    assert(Arena->temp_count > 0);
     --Arena->temp_count;
 }
 
 inline void checkarena(Arena *Arena)
 {
-    // Assert(Arena->temp_count == 0);
+    assert(Arena->temp_count == 0);
 }
 
 inline void subarena(Arena *res, Arena *a, size_t size, size_t alignment)

@@ -22,7 +22,22 @@ QEMU:=qemu-system-x86_64
 OBJS := main.o start64.o mem.o console.o
 OBJS32 := load.o start.o mem32.o console32.o pci.o ahci.o e1000.o arena.o vesa.o detect.o vec.o font8x16.o graphics.o acpi.o relptr.o nvme.o delay.o
 
-default: loader.bin chalk.img
+
+
+# run64:
+
+# iso64:
+
+# chalk64:
+
+# build/x86_64/%.o:%.asm
+# 	@mkdir -p $(shell dirname $@)
+# 	@nasm -felf64 $< -o $@
+
+
+
+
+default: loader.bin chalk.img chalknvme.img
 	# mkdir -p isodir
 	# mkdir -p isodir/boot
 	# cp loader.bin isodir/boot/loader.bin
@@ -31,6 +46,9 @@ default: loader.bin chalk.img
 	# cp grub.cfg isodir/boot/grub/grub.cfg
 	# grub-mkrescue -o kernel.iso isodir
 	$(QEMU) $(QEMUFLAGS)
+
+chalknvme.img:
+	touch chalknvme.img
 
 chalk.img: bootblock loader.bin
 	dd if=/dev/zero of=chalk.img count=10000
@@ -81,7 +99,7 @@ relptr.o: relptr.c relptr.h	u.h
 	$(CC32) $(CFLAGS32) -c $<
 e1000.o: e1000.c e1000.h
 	$(CC32) $(CFLAGS32) -c $<
-arena.o: arena.c arena.h
+arena.o: arena.c arena.h assert.h
 	$(CC32) $(CFLAGS32) -c $<
 detect.o: detect.c detect.h u.h dat.h console.h
 	$(CC32) $(CFLAGS32) -c detect.c -o detect.o
