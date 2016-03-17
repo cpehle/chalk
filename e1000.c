@@ -163,7 +163,7 @@ void e1000init(Arena *a, PciConf *c, Console cons) {
   PciDevConf d = c->dev;
   volatile u32* mmio = d.base_address_register[0].address;
   ethdev.mmioaddr = mmio;
-  cprintint(cons, (u32)mmio, 16, 0);
+  cprint(cons, "mmio address "), cprintint(cons, (u32)mmio, 16, 0), cnl(cons);
 
   u8 mac[6] = {};
   // TODO: Should determine number of receive and transmission registers.

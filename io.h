@@ -1,3 +1,20 @@
+
+struct {
+  const char* name;
+  u64 addr;
+  u64 size;
+} io_mem;
+
+
+/* struct { */
+/*   const char *name; */
+/*   const char *version; */
+/*   struct io_mem mem[]; */
+/*   struct io_port port[]; */
+/* } io_info; */
+
+
+
 static inline u8
 inb(u16 port)
 {

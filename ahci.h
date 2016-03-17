@@ -1,4 +1,3 @@
-
 typedef struct {
   u64 nextsector;
   u64 nextmemory;

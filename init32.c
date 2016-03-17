@@ -103,7 +103,7 @@ void __attribute__((section("init32"))) entry32() {
   // This sequence to enable long mode is documented in the AMD Manual for example.
   disablepaging();
   enablepaemode();
-   enablelongmode();
+  enablelongmode();
   setactivepagetable(0x1000);
   enablepaging();
   if (!longmodeactive()) {

@@ -1,4 +1,3 @@
-
 * Document Renderer
 
 Able to render in arbitrary 2d clipmask, support for arbitrary shaders

@@ -14,6 +14,7 @@
 #include "vesa.h"
 #include "vec.h"
 #include "acpi.h"
+#include "nvme.h"
 #include "graphics.h"
 
 #include "assert.h"
@@ -150,7 +151,7 @@ typedef struct {
   u32 _r0;
 } __attribute__((packed)) Multibootmodule;
 
-static char* bootmsg = "Chalk.\n";
+static char* bootmsg = "chalk booting...\n";
 
 static inline void disablepaging() {
   u32 val = X86_CR0_PG;
@@ -307,9 +308,9 @@ void load(Console c) {
     #endif
   }
   #endif
-
   assert(0);
-  #if 1
+
+#if 1
   pciscan(c); // This is to test pci traversal.
   // Ethernet
   {
@@ -317,35 +318,44 @@ void load(Console c) {
     cprintpciconf(c, eth);
     e1000init(0, &eth, c);
   }
-  for (;;) {}
+
 
   // Instead of a proper memory allocator we just allocate permanently
   // from one large Arena, this is only a temporary solution.
   // Eventually we want to guarantee that processes and tasks get
   // different arenas with potential overlap in a single address
-  // space. There shouldn't be any hardware protections in place,
-  // since it introduces unnescessary overhead and a false sense of
-  // security.
+  // space.
   Arena* a = (void *)0;
   arenainit(a, 1000*1000*1000*sizeof(u8), (void *)0x100000);
-  // Functions that need to allocate memory need to passed a memory
-  // arena as part of their input.
+  // Functions that need to allocate memory need to be passed a memory
+  // arena as part of their execution context.
 
-  // We now initialize all known hardware without relying on dynamic detection.
+  // initialize all known hardware, so far there is no dynamic device
+  // discovery, instead we hardcode the locations of the devices on
+  // the pci bus
+
   AcpiDesc acpi = {};
   acpiinit(&acpi, c);
+
+  // nvme
   {
-    PciConf conf = pciconfread(0,5);
+    PciConf conf = pciconfread(0,3);
     cprintpciconf(c, conf);
-    //nvmepciinit(a, c, conf);
+    nvmepciinit(a, c, conf);
   }
-  // Ahci code doesn't really work yet.
+
+  //for(;;) {}
+
+
+
+
+  // Ahci code doesn't work yet.
   ahcipciinit(a, c, 0, 4);
-  for (;;);
+
   // Eventually we want to enable all CPU features found during detection.
   cpudetect(c);
-  u64 t = rdtsc();
-  // random vector code, need to write proper tests.
+
+
   {
     M44 m = (M44){1,1,0,0,
                   0,1,0,0,
@@ -368,7 +378,8 @@ void load(Console c) {
     cprintm44(c, v4mmm(v4msm(2, m44i()), m44i()));
     cprintm44(c, v4mmm(m, m));
   }
-  cprintint(c, rdtsc()-t, 16, 0);
+
+  // for (;;) {}
   // Graphics only work with bochs emulator
   {
     u32 *framebufferaddr;
@@ -379,6 +390,7 @@ void load(Console c) {
     }
     vbeset(1920, 1200, 32);
     int offset = 0;
+// clear the screen to light grey
     for (int i = 0; i < 1920; ++i) {
       for (int j = 0; j<1200; ++j) {
       offset = (j * 1920 + i);
@@ -392,6 +404,8 @@ void load(Console c) {
       // Format is 0x00rrggbb, can use first byte for alpha blending
       framebufferaddr[offset] = 0x00ff0000;
     }
+
+
     {
       float t = 0;
       BezierData b = {

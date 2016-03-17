@@ -8,19 +8,15 @@ typedef struct Arena
 } Arena;
 
 typedef struct TemporaryMemory TemporaryMemory;
+#define arenapushstructalign(arena, type, alignment) (type *)arenapushsize_(arena, sizeof(type), 16)
+#define arenapusharrayalign(arena, count, type, alignment) (type *)arenapushsize_(arena, (count)*sizeof(type), alignment)
 
-// TODO:
-// Alignment!
-// Clear!
-#define arenapushstructalign(Arena, type, alignment) (type *)arenapushsize_(Arena, sizeof(type), 16)
-#define arenapusharrayalign(Arena, Count, type, alignment) (type *)arenapushsize_(Arena, (Count)*sizeof(type), alignment)
-
-#define arenapushstruct(Arena, type) (type *)arenapushsize_(Arena, sizeof(type), 16)
-#define arenapusharray(Arena, Count, type) (type *)arenapushsize_(Arena, (Count)*sizeof(type), 16)
-#define arenapushsize(Arena, size, alignment) arenapushsize_(Arena, size, alignment)
+#define arenapushstruct(arena, type) (type *)arenapushsize_(arena, sizeof(type), 16)
+#define arenapusharray(arena, count, type) (type *)arenapushsize_(arena, (count)*sizeof(type), 16)
+#define arenapushsize(arena, size, alignment) arenapushsize_(arena, size, alignment)
 void* arenapushsize_(Arena *a, size_t sizeInit, size_t alignment);
 
-void arenainit(Arena *a, size_t size, void *base);
-TemporaryMemory begintemporarymemory(Arena *a);
-void endtemporarymemory(TemporaryMemory TempMem);
-void subarena(Arena *res, Arena *a, size_t size, size_t alignment);
+void arenainit(Arena *arena, size_t size, void *base);
+TemporaryMemory begin_temporary_memory(Arena *a);
+void end_temporary_memory(TemporaryMemory temporary_memory);
+void subarena(Arena *res, Arena *arena, size_t size, size_t alignment);

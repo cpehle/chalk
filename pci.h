@@ -6,10 +6,8 @@ typedef enum {
         PciBarIO
 } PciBarTag;
 
-
 typedef struct PciBar
 {
-
     union
     {
         void *address;
@@ -22,12 +20,10 @@ typedef struct PciBar
 
 typedef struct PciBridgeConf {
         u32 base_address_register[2];
-
         u8 secondary_latency_timer;
         u8 subordinate_bus_number;
         u8 secondary_bus_number;
         u8 primary_bus_number;
-
         u16 secondary_status;
         u8 io_limit;
         u8 io_base;
@@ -82,8 +78,6 @@ typedef struct PciConf {
                 PciDevConf dev;
         };
 } PciConf;
-
-
 
 PciConf pciconfread(u8 bus, u8 slot);
 void pciscan(Console c);

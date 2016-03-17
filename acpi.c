@@ -1,12 +1,10 @@
+/// This file implementes a recursive parser of the memory structures
+/// presented by ACPI but no attempt is made to interpret the bytecode
+/// that is also part of the specification.
 #include "u.h"
 #include "dat.h"
 #include "mem.h"
 #include "console.h"
-
-// * ACPI
-// We implement a simple recursive parser of the various in
-// memory structures presented by ACPI but do not attempt to interpret
-// the bytecode that is also part of the specification.
 
 typedef struct AcpiHeader {
   u32 signature;
@@ -30,7 +28,6 @@ typedef struct AcpiFadt {
   u32 smiCommandPort;
   u8 acpiEnable;
   u8 acpiDisable;
-  // TODO - fill in rest of data
 } __attribute__((packed)) AcpiFadt;
 
 typedef struct AcpiMadt {
@@ -44,7 +41,6 @@ typedef struct ApicHeader {
   u8 length;
 } __attribute__((packed)) ApicHeader;
 
-// APIC structure types
 enum {
   APIC_TYPE_LOCAL_APIC = 0,
   APIC_TYPE_IO_APIC = 1,
@@ -115,7 +111,6 @@ static void acpiparseapic(Acpi a, AcpiMadt *madt) {
   }
 }
 
-
 static void acpiparsedt(Acpi a, AcpiHeader *header) {
   u32 signature = header->signature;
   if (signature == 0x50434146) {
@@ -145,8 +140,8 @@ static void acpiparsexsdt(Acpi a, AcpiHeader *xsdt) {
 
 void acpiinit(Acpi a, Console c) {
   {
-    // See 5.2.5.1 and 5.2.5.3 of ACPI specification on where the root
-    // system description pointer can be located.
+    /// See 5.2.5.1 and 5.2.5.3 of ACPI specification, which describes
+    /// where the root system description pointer can be located.
     u8 *p = (u8 *)0x000e0000;
     u8 *end = (u8 *)0x000fffff;
     while (p < end) {

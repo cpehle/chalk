@@ -77,7 +77,8 @@
 #define EDX_RDTSCP                      (1 << 27)   // RDTSCP and IA32_TSC_AUX
 #define EDX_64_BIT                      (1 << 29)   // 64-bit Architecture
 
-// ------------------------------------------------------------------------------------------------
+/// Wraps cpuid instruction, the constents of the registers eax, ebx,
+/// ecx and edx are returned in the pointers passed to the function.
 static inline void cpuid(u32 reg, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
 {
     __asm__ volatile("cpuid"
@@ -85,7 +86,7 @@ static inline void cpuid(u32 reg, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
         : "0" (reg));
 }
 
-// ------------------------------------------------------------------------------------------------
+/// Detect the cpu we are running on and enable its features as we go along.
 void cpudetect(Console c)
 {
 
