@@ -1,4 +1,5 @@
-// Boot loader
+/// @file bootmain.c
+/// @brief the boot loader
 #include "u.h"
 #include "io.h"
 #include "elf.h"
@@ -64,7 +65,7 @@ bootmain(void)
   return;
 
 found_it:
-  //bootclrscr(0x00);
+  bootclrscr(0x00);
   hdr = (struct mbheader *) (x + n);
 
   if (!(hdr->flags & 0x10000))

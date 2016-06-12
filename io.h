@@ -1,11 +1,3 @@
-
-struct {
-  const char* name;
-  u64 addr;
-  u64 size;
-} io_mem;
-
-
 /* struct { */
 /*   const char *name; */
 /*   const char *version; */
