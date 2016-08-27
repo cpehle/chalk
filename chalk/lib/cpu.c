@@ -1,7 +1,6 @@
 #include "u.h"
 #include "dat.h"
 #include "console.h"
-#include "cpufunc.h"
 
 #include "cpu.h"
 
@@ -90,12 +89,12 @@ static inline void cpuid(u32 reg, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
 void cpudetect(Console c)
 {
 
-    // Enable FPU unit
-    {
-        u32 cr0 = rcr0();
-        cr0 |= (1 << 2);
-        lcr0(cr0);
-    }
+    /* // Enable FPU unit */
+    /* { */
+    /*     u32 cr0 = rcr0(); */
+    /*     cr0 |= (1 << 2); */
+    /*     lcr0(cr0); */
+    /* } */
 
     // Register storage
     u32 eax, ebx, ecx, edx;
@@ -131,7 +130,7 @@ void cpudetect(Console c)
         if (ecx & ECX_SSSE3)    cprint(c, " SSSE3");
         if (ecx & ECX_SSE41)    cprint(c, " SSE41");
         if (ecx & ECX_SSE42)    cprint(c, " SSE42");
-        if (exc & ECX_VMX)      cprint(c, " VMX");
+        if (ecx & ECX_VMX)      cprint(c, " VMX");
         if (ecx & ECX_AVX)      cprint(c, " AVX");
         if (ecx & ECX_F16C)     cprint(c, " F16C");
         if (ecx & ECX_RDRAND)   cprint(c, " RDRAND");

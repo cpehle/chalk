@@ -40,7 +40,6 @@ typedef enum {
   Tdh   = 0x3810 >> 2, // transmit descriptor head
   Tdt   = 0x3818 >> 2, // transmit descriptor tail
 
-
   Mta = 0x5200 >> 2, // multicast table array
   Ral = 0x5400 >> 2, // receive address low
   Rah = 0x5404 >> 2  // receive address high
@@ -71,6 +70,7 @@ enum {
   Rctl_SECRC = (1 << 26),        // Strip Ethernet CRC
 };
 
+
 #define Rctl_BSIZE_256                  (3 << 16)
 #define Rctl_BSIZE_512                  (2 << 16)
 #define Rctl_BSIZE_1024                 (1 << 16)
@@ -81,12 +81,12 @@ enum {
 
 // Transmission control register bits
 enum {
-        Tctl_EN =                         (1 << 1),    // Transmit Enable
-        Tctl_PSP =                        (1 << 3),    // Pad Short Packets
-        Tctl_CT_SHIFT                   = 4        ,   // Collision Threshold
-        Tctl_COLD_SHIFT =                 12       ,   // Collision Distance
-        Tctl_SWXOFF =                     (1 << 22),   // Software XOFF Transmission
-        Tctl_RTLC =                       (1 << 24),   // Re-transmit on Late Collision
+  Tctl_EN = 1 << 1,    // Transmit Enable
+  Tctl_PSP = 1 << 3,    // Pad Short Packets
+  Tctl_CT_SHIFT = 4,   // Collision Threshold
+  Tctl_COLD_SHIFT = 12,   // Collision Distance
+  Tctl_SWXOFF = 1 << 22,   // Software XOFF Transmission
+  Tctl_RTLC = 1 << 24,   // Re-transmit on Late Collision
 };
 
 // Device Control register bits
@@ -153,7 +153,7 @@ static void e1000send(Ethdev dev, Ethbuf buf) {
 }
 
 
-// e1oooinit: Initialize the ethernet device
+// e1000init: Initialize the ethernet device
 void e1000init(Arena *a, PciConf *c, Console cons) {
   Ethdevdesc ethdev;
   if ((c->vendor_id != 0x8086) ||

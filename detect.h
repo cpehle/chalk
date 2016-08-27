@@ -1,1 +1,0 @@
-void cpudetect(Console c);

@@ -1,6 +1,6 @@
 #include "u.h"
 #include "idt.h"
-#include "cpufunc.h"
+
 
 extern void default_exception_handler();
 extern void default_interrupt_handler();
@@ -21,17 +21,17 @@ typedef struct Idtdesc {
 } __attribute__((packed)) Idtdesc;
 
 void idtinit() {
-  for (int i = 0; i < 20; ++i) {
-    idtsethandler(i, InterruptGate, exception_handlers[i]);
-  }
-  for (int i = 20; i < 32; ++i) {
-    idtsethandler(i, InterruptGate, default_exception_handler);
-  }
-  for (int i = 32; i < 256; ++i) {
-    idtsethandler(i, TrapGate, default_interrupt_handler);
-  }
-  Idtdesc idtdesc = {.limit = 256 * sizeof(Idtentry) - 1, .base = 0x0};
-  lidt(&idtdesc);
+  /* for (int i = 0; i < 20; ++i) { */
+  /*   idtsethandler(i, InterruptGate, exception_handlers[i]); */
+  /* } */
+  /* for (int i = 20; i < 32; ++i) { */
+  /*   idtsethandler(i, InterruptGate, default_exception_handler); */
+  /* } */
+  /* for (int i = 32; i < 256; ++i) { */
+  /*   idtsethandler(i, TrapGate, default_interrupt_handler); */
+  /* } */
+  /* Idtdesc idtdesc = {.limit = 256 * sizeof(Idtentry) - 1, .base = 0x0}; */
+  // lidt(&idtdesc);
 }
 
 static inline void idtsetentry(u8 index, u64 base, u16 selector, u16 type) {
