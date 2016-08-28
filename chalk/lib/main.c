@@ -154,6 +154,7 @@ int kernel_main() {
         t += 0.00001;
       }
     }
+    for (;;);
     u32* buf = renderglyphs(a);
     copyrect(framebufferaddr, buf, 0, 20, 98);
     rendertext(framebufferaddr, buf, "Hello World.", 0, 50);
