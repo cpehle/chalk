@@ -13,7 +13,7 @@ libchalk_source_files := $(wildcard chalk/lib/*.c)
 libchalk_object_files := $(patsubst chalk/lib/%.c, \
 	build/lib/%.o, $(libchalk_source_files))
 
-cflags := -ffreestanding -O2 -Wall -Wextra -nostdlib -lgcc
+cflags := -ffreestanding -O2 -Wall -Wextra -nostdlib --target=x86_64-pc-none-elf
 
 .PHONY: all clean run iso
 
@@ -44,7 +44,7 @@ build/arch/$(arch)/%.o: chalk/$(arch)/%.asm
 
 build/lib/%.o: chalk/lib/%.c
 	@mkdir -p $(shell dirname $@)
-	@cc -Ichalk/lib/ $(cflags) -c $< -o $@
+	@clang -Ichalk/lib/ $(cflags) -c $< -o $@
 
 build/lib/libchalk.a: $(libchalk_object_files)
 	@mkdir -p $(shell dirname $@)

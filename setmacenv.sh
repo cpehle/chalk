@@ -1,3 +1,3 @@
 #!/bin/bash
 
- PATH=/Users/cpehle/Development/cross/bin/:$PATH
+PATH=$PWD/third_party/bin/:$PATH
